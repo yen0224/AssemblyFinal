@@ -19,4 +19,9 @@
       <Filter>來源檔案</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <MASM Include="main.asm">
+      <Filter>來源檔案</Filter>
+    </MASM>
+  </ItemGroup>
 </Project>
