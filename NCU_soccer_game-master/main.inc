@@ -8,7 +8,6 @@ includelib C:\Masm32\Lib\msimg32.lib
 includelib C:\Masm32\lib\winmm.lib
 includelib C:\Masm32\Lib\masm32.lib
 
-
 point struct 
     x dd 0      
     y dd 0
@@ -20,10 +19,12 @@ gameObject struct
 gameObject ends
 
 player struct
-    playerObj   gameObject <>
-    sizePoint   point <>
-    stopped     BYTE 0
-    direction   BYTE 0
+    playerObj             gameObject <>
+    sizePoint             point <>
+    stopped               BYTE 0
+    jumping               BYTE 0
+    direction             BYTE 0
+    goals                 dd   0
 player ends
 
 ballStruct struct
@@ -51,6 +52,6 @@ ballStruct ends
     MAX_GOALS EQU 3
 
 .data
-    bar player <<<500,500>,  <0,0>>, <232/2, 39>, 0, D_LEFT>
+    player2 player <<<500,500>,  <0,0>>, <232/2, 39>, 0, D_LEFT, 0 >
     ball ballStruct <<<420,100>,  <0,0>>>
     auxiliar_point point <0, 0>

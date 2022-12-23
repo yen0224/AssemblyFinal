@@ -17,11 +17,11 @@ szText MACRO Name, Text:VARARG
 .const
     background equ 100
     menu equ 101
-    victory equ 103
-    bar_image equ 1002
+    victor_2 equ 103
+    p2 equ 1002
     ball_image equ 102
-    CREF_TRANSPARENT  EQU 0FF00FFh  ; Not sure what this is
-    CREF_TRANSPARENT2 EQU 0FF0000h  ; Not sure what this is
+    CREF_TRANSPARENT  EQU 0FF00FFh
+    CREF_TRANSPARENT2 EQU 0FF0000h
     PLAYER_SPEED  EQU  6 ;可以控制左右移動的速度
 
 .data
@@ -32,8 +32,8 @@ szText MACRO Name, Text:VARARG
 
     hBmp          dd    0
     menuBmp       dd    0
-    victoryBmp       dd    0
-    bar_spritesheet    dd 0  ;spritesheet載入圖片，灰色方框，資料壓縮
+    vitoria2Bmp       dd    0
+    p2_spritesheet    dd 0  ;spritesheet載入圖片，灰色方框，資料壓縮
     ballBmp          dd 0
     paintstruct   PAINTSTRUCT <>    ;內有ballObj、sizePoint
     ultimate_player1 BYTE 0
@@ -42,7 +42,7 @@ szText MACRO Name, Text:VARARG
     ;遊戲狀態
         ; 1 - 菜單
         ; 2 - 遊戲
-        ; 3 - 玩家勝利畫面
+        ; 4 - 玩家勝利畫面
 
     ; NOTSURE
     ; - MCI_OPEN_PARMS Structure ( API=mciSendCommand ) -
@@ -83,11 +83,11 @@ start:
     invoke LoadBitmap, hInstance, menu
     mov    menuBmp, eax
 
-    invoke LoadBitmap, hInstance, victory
-    mov    victoryBmp, eax
+    invoke LoadBitmap, hInstance, victor_2
+    mov    vitoria2Bmp, eax
 
-    invoke LoadBitmap, hInstance, bar_image
-    mov     bar_spritesheet, eax
+        invoke LoadBitmap, hInstance, p2
+    mov     p2_spritesheet, eax
 
     invoke LoadBitmap, hInstance, ball_image
     mov     ballBmp, eax
@@ -119,8 +119,8 @@ start:
             invoke SelectObject, _hMemDC2, menuBmp  ;SelectObject 函數將一個對象選擇到指定的設備內容 (DC) 中。新對象替換相同類型的先前對象。
         .elseif(GAMESTATE == 2)
             invoke SelectObject, _hMemDC2, hBmp
-        .elseif(GAMESTATE == 3)
-            invoke SelectObject, _hMemDC2, victoryBmp
+        .elseif(GAMESTATE == 4)
+            invoke SelectObject, _hMemDC2, vitoria2Bmp
         .endif
 
         invoke BitBlt, _hMemDC, 0, 0, 910, 522, _hMemDC2, 0, 0, SRCCOPY     ;BitBlt 函數執行將與像素矩形相對應的顏色數據從指定的源設備內容到目標設備內容的bit-block傳輸。
@@ -130,19 +130,19 @@ start:
 
 
     paintPlayers proc _hdc:HDC, _hMemDC:HDC, _hMemDC2:HDC
-        invoke SelectObject, _hMemDC2, bar_spritesheet
+        invoke SelectObject, _hMemDC2, p2_spritesheet
 
-        movsx eax, bar.direction
+        movsx eax, player2.direction
         mov ebx, 232/2
         mul ebx
         mov ecx, eax
 
-        invoke isStopped, addr bar
+        invoke isStopped, addr player2
 
         mov edx, 0
 
-        mov eax, bar.playerObj.pos.x
-        mov ebx, bar.playerObj.pos.y
+        mov eax, player2.playerObj.pos.x
+        mov ebx, player2.playerObj.pos.y
         sub eax, 232/2
         sub ebx, 39/2
 
@@ -150,10 +150,13 @@ start:
             232, 39, _hMemDC2,\
             edx, ecx, 232, 39, 16777215
 
-        
+        ; ____________________________________________________________________________________________________
+        ; ----------------------------------       球     --------------------------------------------------
+        ; ____________________________________________________________________________________________________
+
         invoke SelectObject, _hMemDC2, ballBmp
 
-        movsx eax, bar.direction
+        movsx eax, player2.direction
         mov ebx, BALL_SIZE
         mul ebx
         mov ecx, eax
@@ -252,6 +255,16 @@ start:
         assume ecx:ptr gameObject
         mov ecx, addrPlayer
 
+
+
+        .if [edx].jumping == TRUE  ;如果玩家在跳躍(減速)
+            mov ebx, [ecx].speed.y
+            inc ebx
+            mov [ecx].speed.y, ebx
+        .endif
+
+
+
         ; X AXIS ______________
         mov eax, [ecx].pos.x
         mov ebx, [ecx].speed.x
@@ -263,16 +276,29 @@ start:
             mov [ecx].pos.x, eax
         .endif
 
+        ; Y AXIS ______________
+        mov eax, [ecx].pos.y
+        mov ebx, [ecx].speed.y
+        add ax, bx
+
+        ; 如果玩家向上跳，它會“下降”到地面
+        .if eax >= 420
+            mov [edx].jumping, FALSE ;我們警告你他不能再跳躍
+            mov eax, 420         ;我們把他放在地上
+        .endif
+
+        mov [ecx].pos.y, eax
+
         assume ecx:nothing
         ret
     movePlayer endp
+
 
 
     moveBall proc uses eax addrBall:dword
         assume ebx:ptr ballStruct
         mov ebx, addrBall
 
-        ; TODO: remove
         .if [ebx].ballObj.pos.y < 443       ;如果球在空中，我們拉它（重力）
             mov ecx, [ebx].ballObj.speed.y
             inc ecx
@@ -427,8 +453,8 @@ start:
     resetBall endp
 
     resetPositions proc
-        mov bar.playerObj.pos.x, 500
-        mov bar.playerObj.pos.y, 500
+        mov player2.playerObj.pos.x, 500
+        mov player2.playerObj.pos.y, 500
         invoke resetBall
 
         ret
@@ -442,7 +468,7 @@ start:
         game:
             .while GAMESTATE == 2
                 invoke Sleep, 30               
-                invoke movePlayer, addr bar
+                invoke movePlayer, addr player2
                 ; TODO : 呼叫碰撞
                 ; invoke ballColliding
                 invoke moveBall, addr ball
@@ -585,8 +611,8 @@ start:
             .endif
 
         ; 當釋放非系統鍵時
-        .elseif uMsg == WM_KEYUP
-            ; bar movement           
+        .elseif uMsg == WM_KEYUP            
+
             .if (wParam == VK_LEFT) ;左
                 mov keydown, FALSE
                 mov direction, 1
@@ -597,30 +623,36 @@ start:
             .endif
 
             .if direction != -1
-                invoke changePlayerSpeed, ADDR bar, direction, keydown
+                invoke changePlayerSpeed, ADDR player2, direction, keydown
                 mov direction, -1
                 mov keydown, -1
             .endif            
            
         ;當按下非系統鍵時
         .elseif uMsg == WM_KEYDOWN
-            ; Bar movement
-            .if (wParam == VK_LEFT) ; 左
-                mov keydown, TRUE
-                mov direction, 2
-            .elseif (wParam == VK_RIGHT) ; 右
-                mov keydown, TRUE
-                mov direction, 3
-            .elseif (wParam == 51h) ;Q:可以讓球再次彈起
+            
+            .if (wParam == 51h) ;Q:可以讓球再次彈起
                 mov ball.ballObj.speed.x, 0
                 mov ball.ballObj.speed.y, 0
                 mov ball.ballObj.pos.x, 420
                 mov ball.ballObj.pos.y, 100
+
             .elseif (wParam == 45h) ;E
                 mov ultimate_player1, 1
+
             .endif
+
+            .if (wParam == VK_LEFT) ; 左
+                mov keydown, TRUE
+                mov direction, 2
+
+            .elseif (wParam == VK_RIGHT) ; 右
+                mov keydown, TRUE
+                mov direction, 3
+            .endif
+
             .if direction != -1
-                invoke changePlayerSpeed, ADDR bar, direction, keydown
+                invoke changePlayerSpeed, ADDR player2, direction, keydown
                 mov direction, -1
                 mov keydown, -1
             .endif
@@ -631,5 +663,6 @@ start:
         ret
 
     WndProc endp
+
 
 end start
