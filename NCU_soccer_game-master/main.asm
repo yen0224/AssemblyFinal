@@ -20,6 +20,7 @@ szText MACRO Name, Text:VARARG
     victor_2 equ 103
     p2 equ 1002
     ball_image equ 102
+    brick_image equ 104
     CREF_TRANSPARENT  EQU 0FF00FFh
     CREF_TRANSPARENT2 EQU 0FF0000h
     PLAYER_SPEED  EQU  6 ;可以控制左右移動的速度
@@ -35,9 +36,12 @@ szText MACRO Name, Text:VARARG
     vitoria2Bmp       dd    0
     p2_spritesheet    dd 0  ;spritesheet載入圖片，灰色方框，資料壓縮
     ballBmp          dd 0
+    brickBmp          dd 0
     paintstruct   PAINTSTRUCT <>    ;內有ballObj、sizePoint
     ultimate_player1 BYTE 0
     GAMESTATE             BYTE 1
+    brick_x_counter     dd  95
+    brick_manager      dd 1, 1, 1, 1, 1, 1, 1, 1
 
     ;遊戲狀態
         ; 1 - 菜單
@@ -92,6 +96,9 @@ start:
     invoke LoadBitmap, hInstance, ball_image
     mov     ballBmp, eax
 
+    invoke LoadBitmap, hInstance, brick_image
+    mov     brickBmp, eax
+
 
     ;WinMain 函數是用戶為基於 Microsoft Windows 的應用程序提供的入口點的常規名稱
     invoke WinMain,hInstance,NULL,CommandLine,SW_SHOWDEFAULT    
@@ -130,10 +137,11 @@ start:
 
 
     paintPlayers proc _hdc:HDC, _hMemDC:HDC, _hMemDC2:HDC
+        ; Bar
         invoke SelectObject, _hMemDC2, p2_spritesheet
 
         movsx eax, player2.direction
-        mov ebx, 232/2
+        mov ebx, BAR_HALF_WIDTH
         mul ebx
         mov ecx, eax
 
@@ -143,17 +151,12 @@ start:
 
         mov eax, player2.playerObj.pos.x
         mov ebx, player2.playerObj.pos.y
-        sub eax, 232/2
-        sub ebx, 39/2
+        sub eax, BAR_HALF_WIDTH
+        sub ebx, BAR_HALF_HEIGHT
 
-        invoke TransparentBlt, _hMemDC, eax, ebx,\
-            232, 39, _hMemDC2,\
-            edx, ecx, 232, 39, 16777215
+        invoke TransparentBlt, _hMemDC, eax, ebx, BAR_WIDTH, BAR_HEIGHT, _hMemDC2, edx, ecx, BAR_WIDTH, BAR_HEIGHT, 16777215
 
-        ; ____________________________________________________________________________________________________
-        ; ----------------------------------       球     --------------------------------------------------
-        ; ____________________________________________________________________________________________________
-
+        ; Ball
         invoke SelectObject, _hMemDC2, ballBmp
 
         movsx eax, player2.direction
@@ -172,6 +175,36 @@ start:
             BALL_SIZE, BALL_SIZE, _hMemDC2,\
             edx, ecx, BALL_SIZE, BALL_SIZE, 16777215
 
+        ; Brick
+        mov ecx, 8
+        mov esi, OFFSET brick_manager
+        paintBrick:
+            push ecx
+            mov edi, [esi]
+            .if (edi == 0)
+                jmp next
+            .endif
+
+            invoke SelectObject, _hMemDC2, brickBmp
+
+            movsx eax, player2.direction
+            mov ebx, BRICK_HALF_WIDTH
+            mul ebx
+            mov ecx, eax
+            mov edx, 0
+
+            mov eax, brick.brickObj.pos.x
+            mov ebx, brick.brickObj.pos.y
+            sub eax, BRICK_HALF_WIDTH
+            sub ebx, BRICK_HALF_HEIGHT
+
+            invoke TransparentBlt, _hMemDC, eax, ebx, BRICK_WIDTH, BRICK_HEIGHT, _hMemDC2, edx, ecx, BRICK_WIDTH, BRICK_HEIGHT, 16777215
+            next :
+                add brick.brickObj.pos.x, 100
+                add esi, 4
+                pop ecx
+        loop paintBrick
+        mov brick.brickObj.pos.x, 95
         ret
     paintPlayers endp
 

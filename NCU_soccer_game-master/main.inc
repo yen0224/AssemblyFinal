@@ -32,12 +32,24 @@ ballStruct struct
     sizePoint   point <>
 ballStruct ends
 
+brickStruct struct
+    brickObj    gameObject <>
+    sizePoint   point <>
+brickStruct ends
+
 .const
-    PLAYER_SIZE         EQU 90
-    PLAYER_HALF_SIZE    EQU PLAYER_SIZE / 2
+    BAR_WIDTH      EQU 232
+    BAR_HALF_WIDTH EQU BRICK_WIDTH / 2
+    BAR_HEIGHT      EQU 39
+    BAR_HALF_HEIGHT EQU BRICK_HEIGHT / 2
 
     BALL_SIZE       EQU 40
     BALL_HALF_SIZE  EQU BALL_SIZE / 2
+
+    BRICK_WIDTH      EQU 90
+    BRICK_HALF_WIDTH EQU BRICK_WIDTH / 2
+    BRICK_HEIGHT      EQU 40
+    BRICK_HALF_HEIGHT EQU BRICK_HEIGHT / 2
 
     ;BALL_SPEED_Y EQU -17
 
@@ -52,6 +64,7 @@ ballStruct ends
     MAX_GOALS EQU 3
 
 .data
-    player2 player <<<500,500>,  <0,0>>, <232/2, 39>, 0, D_LEFT, 0 >
-    ball ballStruct <<<420,100>,  <0,0>>>
+    player2 player <<<500, 500>,  <0, 0>>, <232/2, 39>, 0, D_LEFT, 0 >
+    ball ballStruct <<<420, 100>,  <0, 0>>>
+    brick brickStruct <<<95, 50>, <0, 0>>, <0, 0>>
     auxiliar_point point <0, 0>
