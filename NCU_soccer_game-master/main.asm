@@ -40,8 +40,7 @@ szText MACRO Name, Text:VARARG
     paintstruct   PAINTSTRUCT <>    ;內有ballObj、sizePoint
     ultimate_player1 BYTE 0
     GAMESTATE             BYTE 1
-    brick_x_counter     dd  95
-    brick_manager      dd 1, 1, 1, 1, 1, 1, 1, 1
+    brick_manager      dd 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
     ;遊戲狀態
         ; 1 - 菜單
@@ -372,7 +371,7 @@ start:
     ; NOTSURE
     ; TODO : 碰撞
     ; collide proc obj1Pos:point, obj2Pos:point, obj1Size:point, obj2Size:point
-        
+
     ;     mov eax, obj1Pos.x
     ;     add eax, obj1Size.x                    ; pos1 + 大小
     ;     ;eax:玩家的右邊界
