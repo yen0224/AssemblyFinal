@@ -17,10 +17,11 @@ szText MACRO Name, Text:VARARG
 .const
     background equ 100
     menu equ 101
-    victor_2 equ 103
-    p2 equ 1002
     ball_image equ 102
+    victor_2 equ 103
     brick_image equ 104
+    lose equ 105
+    p2 equ 1002
     CREF_TRANSPARENT  EQU 0FF00FFh
     CREF_TRANSPARENT2 EQU 0FF0000h
     PLAYER_SPEED  EQU  6 ;可以控制左右移動的速度
@@ -33,19 +34,21 @@ szText MACRO Name, Text:VARARG
     hBmp            dd  0
     menuBmp         dd  0
     vitoria2Bmp     dd  0
+    loseBmp         dd  0
     p2_spritesheet  dd  0               ;spritesheet載入圖片，灰色方框，資料壓縮
     ballBmp         dd  0
     brickBmp        dd  0
     paintstruct     PAINTSTRUCT <>      ;內有ballObj、sizePoint
     ultimate_player1    BYTE    0
-    GAMESTATE           BYTE    1       ;game status
     brick_manager       dd      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
     brick_amount        dd      24
-
+    life               BYTE    3
+    GAMESTATE           BYTE    1      ;game status
     ;遊戲狀態
         ; 1 - menu
         ; 2 - in_game
-        ; 4 - player_win
+        ; 3 - player_win
+        ; 4 - player_lost
 
     ; NOTSURE
     ; - MCI_OPEN_PARMS Structure ( API=mciSendCommand ) -
@@ -98,6 +101,9 @@ start:
     invoke LoadBitmap, hInstance, brick_image
     mov     brickBmp, eax
 
+    invoke LoadBitmap, hInstance, lose
+    mov    loseBmp, eax
+
 
     ;WinMain 函數是用戶為基於 Microsoft Windows 的應用程序提供的入口點的常規名稱
     invoke WinMain,hInstance,NULL,CommandLine,SW_SHOWDEFAULT    
@@ -126,6 +132,8 @@ start:
             invoke SelectObject, _hMemDC2, hBmp
         .elseif(GAMESTATE == 3)
             invoke SelectObject, _hMemDC2, vitoria2Bmp
+        .elseif(GAMESTATE == 4)
+            invoke SelectObject, _hMemDC2, loseBmp
         .endif
 
         invoke BitBlt, _hMemDC, 0, 0, 910, 522, _hMemDC2, 0, 0, SRCCOPY     ;BitBlt 函數執行將與像素矩形相對應的顏色數據從指定的源設備內容到目標設備內容的bit-block傳輸。
@@ -279,6 +287,43 @@ start:
     changePlayerSpeed endp
 
 
+    ; !purpose: reset the ball to the initial position
+    resetBall proc
+        mov ball.ballObj.speed.x, 0
+        mov ball.ballObj.speed.y, 0
+        mov ball.ballObj.pos.x, 420
+        mov ball.ballObj.pos.y, 100
+        ret
+    resetBall endp
+
+
+    ; !purpose: reset the position of the bar
+    resetPositions proc
+        mov player2.playerObj.pos.x, 500
+        mov player2.playerObj.pos.y, 500
+        invoke resetBall
+        ret
+    resetPositions endp
+
+
+    ; !purpose: reset all bricks (brick_manager) to 1
+    resetBrick proc
+        push esi
+        push edi
+        mov esi, OFFSET brick_manager
+        mov ecx, 24
+        .while ecx > 0
+            mov edi, 1
+            mov [esi], edi
+            add esi, 4
+            dec ecx
+        .endw
+        pop edi
+        pop esi
+        ret
+    resetBrick endp
+
+
     movePlayer proc uses eax addrPlayer:dword
         assume edx:ptr player
         mov edx, addrPlayer
@@ -335,8 +380,11 @@ start:
         mov ecx, [ebx].ballObj.speed.y
         add ax, cx
 
-        .if eax > 443
-            mov eax, 443
+        ; if fall out of the bottom of the screen
+        .if eax > 450
+            invoke resetBall
+            invoke resetPositions
+            sub life, 1
         .endif
 
         ; X AXIS ______________
@@ -360,6 +408,15 @@ start:
         assume ecx:nothing
         ret 
     moveBall endp
+
+
+
+
+    resetLife proc
+        mov life, 3
+        ret
+    resetLife endp
+
 
     ; !purpose: check the amount of bricks left
     ; update variable: brick_amount
@@ -470,20 +527,6 @@ start:
     ballColliding endp
 
 
-    resetBall proc
-        mov ball.ballObj.speed.x, 0
-        mov ball.ballObj.speed.y, 0
-        mov ball.ballObj.pos.x, 420
-        mov ball.ballObj.pos.y, 100
-        ret
-    resetBall endp
-
-    resetPositions proc
-        mov player2.playerObj.pos.x, 500
-        mov player2.playerObj.pos.y, 500
-        invoke resetBall
-        ret
-    resetPositions endp
 
 
     ; NOTSURE
@@ -502,6 +545,8 @@ start:
                 ; if no bricks left, win
                 .if (brick_amount == 0)
                     mov GAMESTATE, 3
+                .ELSEIF (life == 0)
+                    mov GAMESTATE, 4
                 .endif
             .endw
 
@@ -625,9 +670,11 @@ start:
                     mov GAMESTATE, 2
                 .elseif GAMESTATE == 2
                     mov GAMESTATE, 1
-                .elseif GAMESTATE == 3
+                .elseif (GAMESTATE == 3) || (GAMESTATE == 4)
                     invoke resetPositions
                     invoke resetBall
+                    invoke resetBrick
+                    invoke resetLife
                     mov GAMESTATE, 2
                 .endif                
             .endif
