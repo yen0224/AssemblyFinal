@@ -418,20 +418,21 @@ start:
         .if edx == TRUE  && ecx == TRUE
             mov eax, player2.playerObj.speed.x
             .if eax == 0                                    ; 如果玩家是靜止的
-                mov eax, ball.ballObj.speed.x               ; 只是被球擊中->對方速度的反向射回去
-                .if ultimate_player1 == 1
-                    add eax, 50
-                    mov ultimate_player1, 0
+                .if ball.ballObj.speed.x == 0
+                    add eax, -2
+                .else
+                    mov eax, ball.ballObj.speed.x               ; 只是被球擊中->對方速度的反向射回去
                 .endif
-                ;neg eax
             .else                                           ; 如果玩家在移動
-                add eax, player2.playerObj.speed.x          ; 我們根據你的速度踢(根據玩家x的水平速度)
-                .if ultimate_player1 == 1
-                    add eax, 50
-                    mov ultimate_player1, 0
-                .endif
+                mov eax, ball.ballObj.speed.x
+
+                ;   add eax, player2.playerObj.speed.x          ; 我們根據你的速度踢(根據玩家x的水平速度)
+                ; .if ultimate_player1 == 1
+                ;     add eax, 50
+                ;     mov ultimate_player1, 0
+                ; .endif
             .endif
-            mov ball.ballObj.speed.y, -20
+            mov ball.ballObj.speed.y, -25
             mov ball.ballObj.speed.x, eax       
         .endif
         ret
@@ -450,7 +451,6 @@ start:
         mov player2.playerObj.pos.x, 500
         mov player2.playerObj.pos.y, 500
         invoke resetBall
-
         ret
     resetPositions endp
 
