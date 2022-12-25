@@ -39,7 +39,8 @@ szText MACRO Name, Text:VARARG
     paintstruct     PAINTSTRUCT <>      ;內有ballObj、sizePoint
     ultimate_player1    BYTE    0
     GAMESTATE           BYTE    1       ;game status
-    brick_manager       dd      1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+    brick_manager       dd      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+    brick_amount        dd      24
 
     ;遊戲狀態
         ; 1 - menu
@@ -123,7 +124,7 @@ start:
             invoke SelectObject, _hMemDC2, menuBmp  ;SelectObject 函數將一個對象選擇到指定的設備內容 (DC) 中。新對象替換相同類型的先前對象。
         .elseif(GAMESTATE == 2)
             invoke SelectObject, _hMemDC2, hBmp
-        .elseif(GAMESTATE == 4)
+        .elseif(GAMESTATE == 3)
             invoke SelectObject, _hMemDC2, vitoria2Bmp
         .endif
 
@@ -360,6 +361,36 @@ start:
         ret 
     moveBall endp
 
+    ; !purpose: check the amount of bricks left
+    ; update variable: brick_amount
+    countBricks proc
+        ; preserve registers
+        push eax
+        push esi
+        push ecx
+        push edi
+
+        mov ecx, 24
+        mov esi, OFFSET brick_manager
+        mov eax, 0
+        .while ecx > 0
+            mov edi, [esi]
+            .if (edi == 1)
+                inc eax
+            .endif
+            add esi, 4
+            dec ecx
+        .endw
+        mov brick_amount, eax
+
+        ; restore registers
+        pop edi
+        pop ecx
+        pop esi
+        pop eax
+        ret
+    countBricks endp
+
     ; !purpose: check if two objects collided
     ; @param: object1's position and size, object2's position and size
     ; return value: TRUE if collided, otherwise FALSE
@@ -466,15 +497,12 @@ start:
                 ; TODO : 呼叫碰撞
                 invoke ballColliding
                 invoke moveBall, addr ball
-                ; TODO : 呼叫判斷磚塊數的函式
-                ; invoke verifyGoal, addr ball
+                invoke countBricks
 
-                ; TODO : 調整勝利條件
-                ; .if (player1.goals == MAX_GOALS)
-                ;     mov GAMESTATE, 3
-                ; .elseif (player2.goals == MAX_GOALS)
-                ;     mov GAMESTATE, 4
-                ; .endif
+                ; if no bricks left, win
+                .if (brick_amount == 0)
+                    mov GAMESTATE, 3
+                .endif
             .endw
 
         jmp game
@@ -597,7 +625,7 @@ start:
                     mov GAMESTATE, 2
                 .elseif GAMESTATE == 2
                     mov GAMESTATE, 1
-                .elseif GAMESTATE == 3 || GAMESTATE == 4
+                .elseif GAMESTATE == 3
                     invoke resetPositions
                     invoke resetBall
                     mov GAMESTATE, 2
