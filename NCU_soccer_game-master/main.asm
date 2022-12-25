@@ -27,41 +27,40 @@ szText MACRO Name, Text:VARARG
 
 .data
     ; NOTSURE
-    szDisplayName db "Arkanoid",0     ;DD:Define Double Word，要用DWORD也可
-    CommandLine   dd 0      ;WinMain函式的參數之一，該參數設null也可
-    buffer        db 256 dup(?)
-
-    hBmp          dd    0
-    menuBmp       dd    0
-    vitoria2Bmp       dd    0
-    p2_spritesheet    dd 0  ;spritesheet載入圖片，灰色方框，資料壓縮
-    ballBmp          dd 0
-    brickBmp          dd 0
-    paintstruct   PAINTSTRUCT <>    ;內有ballObj、sizePoint
-    ultimate_player1 BYTE 0
-    GAMESTATE             BYTE 1
-    brick_manager      dd 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+    szDisplayName   db  "Arkanoid",0    ;DD:Define Double Word，要用DWORD也可
+    CommandLine     dd  0               ;WinMain函式的參數之一，該參數設null也可
+    buffer          db  256 dup(?)
+    hBmp            dd  0
+    menuBmp         dd  0
+    vitoria2Bmp     dd  0
+    p2_spritesheet  dd  0               ;spritesheet載入圖片，灰色方框，資料壓縮
+    ballBmp         dd  0
+    brickBmp        dd  0
+    paintstruct     PAINTSTRUCT <>      ;內有ballObj、sizePoint
+    ultimate_player1    BYTE    0
+    GAMESTATE           BYTE    1       ;game status
+    brick_manager       dd      1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
     ;遊戲狀態
-        ; 1 - 菜單
-        ; 2 - 遊戲
-        ; 4 - 玩家勝利畫面
+        ; 1 - menu
+        ; 2 - in_game
+        ; 4 - player_win
 
     ; NOTSURE
     ; - MCI_OPEN_PARMS Structure ( API=mciSendCommand ) -
-    open_dwCallback     dd ?
-    open_wDeviceID     dd ?
-    open_lpstrDeviceType  dd ?
-    open_lpstrElementName  dd ?
-    open_lpstrAlias     dd ?
+    open_dwCallback         dd ?
+    open_wDeviceID          dd ?
+    open_lpstrDeviceType    dd ?
+    open_lpstrElementName   dd ?
+    open_lpstrAlias         dd ?
 
     ; - MCI_GENERIC_PARMS Structure ( API=mciSendCommand ) -
-    generic_dwCallback   dd ?
+    generic_dwCallback      dd ?
 
     ; - MCI_PLAY_PARMS Structure ( API=mciSendCommand ) -
-    play_dwCallback     dd ?
-    play_dwFrom       dd ?
-    play_dwTo        dd ?    
+    play_dwCallback         dd ?
+    play_dwFrom             dd ?
+    play_dwTo               dd ?
 
 ; NOTSURE
 ; 無初始值之資料段與常數資料段
@@ -89,7 +88,7 @@ start:
     invoke LoadBitmap, hInstance, victor_2
     mov    vitoria2Bmp, eax
 
-        invoke LoadBitmap, hInstance, p2
+    invoke LoadBitmap, hInstance, p2
     mov     p2_spritesheet, eax
 
     invoke LoadBitmap, hInstance, ball_image
@@ -103,7 +102,6 @@ start:
     invoke WinMain,hInstance,NULL,CommandLine,SW_SHOWDEFAULT    
     invoke ExitProcess,eax
 
-
     ; 判斷 playerObj 的 speed 是否為 0, 設定 stopped 為 1
     isStopped proc addrPlayer:dword
         assume edx:ptr player
@@ -115,8 +113,8 @@ start:
 
         ret
     isStopped endp
-
-
+    
+    ;* the process who draw the background
     paintBackground proc _hdc:HDC, _hMemDC:HDC, _hMemDC2:HDC
         LOCAL rect   :RECT      ;RECT 結構定義了矩形左上角和右下角的坐標。
 
@@ -134,7 +132,7 @@ start:
 
     paintBackground endp
 
-
+    ;* the process who draw the player
     paintPlayers proc _hdc:HDC, _hMemDC:HDC, _hMemDC2:HDC
         ; Bar
         invoke SelectObject, _hMemDC2, p2_spritesheet
@@ -287,15 +285,11 @@ start:
         assume ecx:ptr gameObject
         mov ecx, addrPlayer
 
-
-
         .if [edx].jumping == TRUE  ;如果玩家在跳躍(減速)
             mov ebx, [ecx].speed.y
             inc ebx
             mov [ecx].speed.y, ebx
         .endif
-
-
 
         ; X AXIS ______________
         mov eax, [ecx].pos.x
@@ -324,8 +318,6 @@ start:
         assume ecx:nothing
         ret
     movePlayer endp
-
-
 
     moveBall proc uses eax addrBall:dword
         assume ebx:ptr ballStruct
@@ -368,112 +360,107 @@ start:
         ret 
     moveBall endp
 
-    ; NOTSURE
-    ; TODO : 碰撞
-    ; collide proc obj1Pos:point, obj2Pos:point, obj1Size:point, obj2Size:point
+    ; !purpose: check if two objects collided
+    ; @param: object1's position and size, object2's position and size
+    ; return value: TRUE if collided, otherwise FALSE
+    collide proc obj1Pos:point, obj2Pos:point, obj1Size:point, obj2Size:point
+        mov eax, obj1Pos.x
+        add eax, obj1Size.x                    ; pos1 + 大小
+        ;eax:玩家的右邊界
+        mov ebx, obj2Pos.x
+        sub ebx, obj2Size.x                    ; pos2 - 大小
+        ;ebx:球的左邊界
+        .if eax > ebx
+        mov eax, obj1Pos.x
+            sub eax, obj1Size.x                    ; pos1 - 大小
 
-    ;     mov eax, obj1Pos.x
-    ;     add eax, obj1Size.x                    ; pos1 + 大小
-    ;     ;eax:玩家的右邊界
-    ;     mov ebx, obj2Pos.x
-    ;     sub ebx, obj2Size.x                    ; pos2 - 大小
-    ;     ;ebx:球的左邊界
-    ;     .if eax > ebx
-    ;         mov eax, obj1Pos.x
-    ;         sub eax, obj1Size.x                    ; pos1 - 大小
+            mov ebx, obj2Pos.x
+            add ebx, obj2Size.x                    ; pos2 + 大小
+            .if eax < ebx
+                mov edx, TRUE
+            .else
+                mov edx, FALSE
+            .endif
+        .else
+            mov edx, FALSE
+        .endif
 
-    ;         mov ebx, obj2Pos.x
-    ;         add ebx, obj2Size.x                    ; pos2 + 大小
-    ;         .if eax < ebx
-    ;             mov edx, TRUE
-    ;         .else
-    ;             mov edx, FALSE
-    ;         .endif
-    ;     .else
-    ;         mov edx, FALSE
-    ;     .endif
+        mov eax, obj1Pos.y
+        add eax, obj1Size.y                    ; pos1 + 大小
+        ;eax:玩家的下邊界
+        mov ebx, obj2Pos.y
+        sub ebx, obj2Size.y                    ; pos2 - 大小
+        ;ebx:球的上邊界
+        .if eax > ebx
+            mov eax, obj1Pos.y
+            sub eax, obj1Size.y                    ; pos1 - 大小
 
-    ;     mov eax, obj1Pos.y
-    ;     add eax, obj1Size.y                    ; pos1 + 大小
-    ;     ;eax:玩家的下邊界
-    ;     mov ebx, obj2Pos.y
-    ;     sub ebx, obj2Size.y                    ; pos2 - 大小
-    ;     ;ebx:球的上邊界
-    ;     .if eax > ebx
-    ;         mov eax, obj1Pos.y
-    ;         sub eax, obj1Size.y                    ; pos1 - 大小
+            mov ebx, obj2Pos.y
+            add ebx, obj2Size.y                    ; pos2 + 大小
+            .if eax < ebx
+                mov ecx, TRUE
+            .else
+                mov ecx, FALSE
+            .endif
+        .else
+            mov ecx, FALSE
+        .endif
+        pop ebx
+        pop eax
+        ret
+    collide endp
 
-    ;         mov ebx, obj2Pos.y
-    ;         add ebx, obj2Size.y                    ; pos2 + 大小
-    ;         .if eax < ebx
-    ;             mov ecx, TRUE
-    ;         .else
-    ;             mov ecx, FALSE
-    ;         .endif
-    ;     .else
-    ;         mov ecx, FALSE
-    ;     .endif
+    ; !purpose: deal with collision
+    ; @params:
+    ; return value:
+    ballColliding proc
+        ; first part: deal with the collition of the bar and the ball
+        invoke collide, player2.playerObj.pos, ball.ballObj.pos, player2.sizePoint, ball.sizePoint
+        .if edx == TRUE  && ecx == TRUE                      ; 相撞
+            mov eax, player2.playerObj.speed.x
+            .if eax == 0                                    ; 如果玩家是靜止的
+                mov eax, ball.ballObj.speed.x               ; 只是被球擊中->對方速度的反向射回去
+                .if ultimate_player1 == 1
+                    add eax, 50
+                    mov ultimate_player1, 0
+                .endif
+                dec eax
+                dec eax
+                neg eax
+            .else                                           ; 如果玩家在移動
+                add eax, player2.playerObj.speed.x          ; 我們根據你的速度踢(根據玩家x的水平速度)
+                .if ultimate_player1 == 1
+                    add eax, 50
+                    mov ultimate_player1, 0
+                .endif
+                dec eax
+                dec eax
+                dec eax
+            .endif
+            mov ball.ballObj.speed.y, -20
+            mov ball.ballObj.speed.x, eax       
+        .endif
 
-    ;     pop ebx
-    ;     pop eax
-
-    ;     ret
-    ; collide endp
-
-    ; ballColliding proc
-    
-    ;     invoke collide, player1.playerObj.pos, ball.ballObj.pos, player1.sizePoint, ball.sizePoint
-    ;     .if edx == TRUE  && ecx == TRUE                      ; 相撞
-    ;         mov eax, player1.playerObj.speed.x
-
-    ;         .if eax == 0                                    ; 如果玩家是靜止的
-    ;             mov eax, ball.ballObj.speed.x               ; 只是被球擊中->對方速度的反向射回去
-    ;             .if ultimate_player1 == 1
-    ;                 add eax, 50
-    ;                 mov ultimate_player1, 0
-    ;             .endif
-    ;             dec eax
-    ;             dec eax
-    ;             neg eax
-    ;         .else                                           ; 如果玩家在移動
-    ;             add eax, player1.playerObj.speed.x          ; 我們根據你的速度踢(根據玩家x的水平速度)
-    ;             .if ultimate_player1 == 1
-    ;                 add eax, 50
-    ;                 mov ultimate_player1, 0
-    ;             .endif
-    ;             dec eax
-    ;             dec eax
-    ;             dec eax
-
-    ;         .endif
-
-    ;         mov ball.ballObj.speed.y, -20
-    ;         mov ball.ballObj.speed.x, eax       
-    ;     .endif
-
-    ;     invoke collide, player2.playerObj.pos, ball.ballObj.pos, player2.sizePoint, ball.sizePoint
-    ;     .if edx == TRUE  && ecx == TRUE                      ; 相撞 
-    ;         mov eax, player2.playerObj.speed.x
-
-    ;         .if eax == 0
-    ;             mov eax, ball.ballObj.speed.x
-    ;             dec eax
-    ;             dec eax
-    ;             neg eax
-    ;         .else
-    ;             add eax, player2.playerObj.speed.x
-    ;             dec eax
-    ;             dec eax
-    ;             dec eax
-
-    ;         .endif
-
-    ;         mov ball.ballObj.speed.y, -15
-    ;         mov ball.ballObj.speed.x, eax          
-    ;     .endif     
-
-    ;     ret
-    ; ballColliding endp
+        ; second part: deal with the collition of the box and the bar
+        ;invoke collide, player2.playerObj.pos, ball.ballObj.pos, player2.sizePoint, ball.sizePoint
+        ;.if edx == TRUE  && ecx == TRUE                      ; 相撞 
+        ;    mov eax, player2.playerObj.speed.x
+        ;    .if eax == 0
+        ;        mov eax, ball.ballObj.speed.x
+        ;        dec eax
+        ;        dec eax
+        ;        neg eax
+        ;    .else
+        ;        add eax, player2.playerObj.speed.x
+        ;        dec eax
+        ;        dec eax
+        ;        dec eax
+        ;    .endif
+        ;    mov ball.ballObj.speed.y, -15
+        ;    mov ball.ballObj.speed.x, eax          
+        ;.endif
+        ret
+    ballColliding endp
 
 
     resetBall proc
@@ -502,7 +489,7 @@ start:
                 invoke Sleep, 30               
                 invoke movePlayer, addr player2
                 ; TODO : 呼叫碰撞
-                ; invoke ballColliding
+                invoke ballColliding
                 invoke moveBall, addr ball
                 ; TODO : 呼叫判斷磚塊數的函式
                 ; invoke verifyGoal, addr ball
@@ -596,18 +583,18 @@ start:
     WinMain endp
 
 
-    WndProc proc hWin  :DWORD,
-                uMsg   :DWORD,
-                wParam :DWORD,
-                lParam :DWORD
-
-        LOCAL hDC    :DWORD
-        LOCAL memDC  :DWORD
-        LOCAL memDCp1 : DWORD
-        LOCAL hOld   :DWORD
-        LOCAL hWin2  :DWORD
-        LOCAL direction : BYTE
-        LOCAL keydown   : BYTE
+    WndProc proc hWin:DWORD,
+                 uMsg:DWORD,
+                 wParam:DWORD,
+                 lParam:DWORD
+        ;variables
+        LOCAL hDC:DWORD
+        LOCAL memDC:DWORD
+        LOCAL memDCp1:DWORD
+        LOCAL hOld:DWORD
+        LOCAL hWin2:DWORD
+        LOCAL direction:BYTE
+        LOCAL keydown:BYTE
         mov direction, -1
         mov keydown, -1
 
