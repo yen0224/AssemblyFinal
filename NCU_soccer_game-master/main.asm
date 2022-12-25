@@ -24,7 +24,7 @@ szText MACRO Name, Text:VARARG
     p2 equ 1002
     CREF_TRANSPARENT  EQU 0FF00FFh
     CREF_TRANSPARENT2 EQU 0FF0000h
-    PLAYER_SPEED  EQU  6 ;可以控制左右移動的速度
+    PLAYER_SPEED  EQU  10 ;可以控制左右移動的速度
 
 .data
     ; NOTSURE
@@ -178,17 +178,17 @@ start:
         sub ebx, BALL_HALF_SIZE
 
         invoke TransparentBlt, _hMemDC, eax, ebx,\
-            BALL_SIZE, BALL_SIZE, _hMemDC2,\
+            BALL_SIZE, BALL_SIZE, _hMemDC2,
             edx, ecx, BALL_SIZE, BALL_SIZE, 16777215
 
-        ; Brick
+        ; Brick - Row 1
         mov ecx, 8
         mov esi, OFFSET brick_manager
-        paintBrick:
+        paintBrickOne:
             push ecx
             mov edi, [esi]
             .if (edi == 0)
-                jmp next
+                jmp nextOne
             .endif
 
             invoke SelectObject, _hMemDC2, brickBmp
@@ -205,15 +205,73 @@ start:
             sub ebx, BRICK_HALF_HEIGHT
 
             invoke TransparentBlt, _hMemDC, eax, ebx, BRICK_WIDTH, BRICK_HEIGHT, _hMemDC2, edx, ecx, BRICK_WIDTH, BRICK_HEIGHT, 16777215
-            next :
+            nextOne :
                 add brick.brickObj.pos.x, 100
                 add esi, 4
                 pop ecx
-        loop paintBrick
+        loop paintBrickOne
         mov brick.brickObj.pos.x, 95
+
+        ; Brick - Row 2
+        mov brick.brickObj.pos.y, 100
+        mov ecx, 8
+        paintBrickTwo:
+            push ecx
+            mov edi, [esi]
+            .if (edi == 0)
+                jmp nextTwo
+            .endif
+
+            invoke SelectObject, _hMemDC2, brickBmp
+
+            movsx eax, player2.direction
+            mov ebx, BRICK_HALF_WIDTH
+            mul ebx
+            mov ecx, eax
+            mov edx, 0
+
+            mov eax, brick.brickObj.pos.x
+            mov ebx, brick.brickObj.pos.y
+            sub eax, BRICK_HALF_WIDTH
+            sub ebx, BRICK_HALF_HEIGHT
+
+            invoke TransparentBlt, _hMemDC, eax, ebx, BRICK_WIDTH, BRICK_HEIGHT, _hMemDC2, edx, ecx, BRICK_WIDTH, BRICK_HEIGHT, 16777215
+            nextTwo :
+                add brick.brickObj.pos.x, 100
+                add esi, 4
+                pop ecx
+        loop paintBrickTwo
+        mov brick.brickObj.pos.x, 95
+
+        ; Brick - Row 3
+        mov brick.brickObj.pos.y, 150
+        mov ecx, 8
+        paintBrickThree:
+            push ecx
+            mov edi, [esi]
+            .if (edi == 0)
+                jmp nextThree
+            .endif
+            invoke SelectObject, _hMemDC2, brickBmp
+            movsx eax, player2.direction
+            mov ebx, BRICK_HALF_WIDTH
+            mul ebx
+            mov ecx, eax
+            mov edx, 0
+            mov eax, brick.brickObj.pos.x
+            mov ebx, brick.brickObj.pos.y
+            sub eax, BRICK_HALF_WIDTH
+            sub ebx, BRICK_HALF_HEIGHT
+            invoke TransparentBlt, _hMemDC, eax, ebx, BRICK_WIDTH, BRICK_HEIGHT, _hMemDC2, edx, ecx, BRICK_WIDTH, BRICK_HEIGHT, 16777215
+            nextThree :
+                add brick.brickObj.pos.x, 100
+                add esi, 4
+                pop ecx
+        loop paintBrickThree
+        mov brick.brickObj.pos.x, 95
+        mov brick.brickObj.pos.y, 50
         ret
     paintPlayers endp
-
 
     ; NOTSURE
     screenUpdate proc
@@ -246,7 +304,6 @@ start:
         ret
     screenUpdate endp
 
-
     ; NOTSURE
     paintThread proc p:DWORD
         .WHILE GAMESTATE != 5
@@ -255,7 +312,6 @@ start:
         .endw
         ret
     paintThread endp   
-
 
     ; NOTSURE
     changePlayerSpeed proc uses eax addrPlayer : DWORD, direction : BYTE, keydown : BYTE
@@ -327,10 +383,8 @@ start:
     movePlayer proc uses eax addrPlayer:dword
         assume edx:ptr player
         mov edx, addrPlayer
-
         assume ecx:ptr gameObject
         mov ecx, addrPlayer
-
         .if [edx].jumping == TRUE  ;如果玩家在跳躍(減速)
             mov ebx, [ecx].speed.y
             inc ebx
@@ -341,10 +395,8 @@ start:
         mov eax, [ecx].pos.x
         mov ebx, [ecx].speed.x
         add eax, ebx
-        
-
         ;  如果玩家在屏幕範圍內，我們才改變它的位置
-        .if eax > 0 + 232/2 && eax < 890 - 232/2
+        .if  eax < 890 - 232/2
             mov [ecx].pos.x, eax
         .endif
 
@@ -353,10 +405,9 @@ start:
         mov ebx, [ecx].speed.y
         add ax, bx
 
-        ; 如果玩家向上跳，它會“下降”到地面
         .if eax >= 420
-            mov [edx].jumping, FALSE ;我們警告你他不能再跳躍
-            mov eax, 420         ;我們把他放在地上
+            ;mov [edx].jumping, FALSE ;我們警告你他不能再跳躍
+            mov eax, 420            ;我們把他放在地上
         .endif
 
         mov [ecx].pos.y, eax
@@ -393,23 +444,19 @@ start:
         add dx, cx
 
         ;如果球在屏幕邊緣，我們移動它
-        .if edx > 10 && edx < 885       ;正常範圍
+        .if edx > 10 && edx < 885
             mov [ebx].ballObj.pos.x, edx
-        .else                               ;如果球撞到牆，我們就擊中它     ;屏幕邊緣
+        .else
             mov ecx, ball.ballObj.speed.x
-            dec ecx
-            dec ecx
             neg ecx
             mov [ebx].ballObj.speed.x, ecx 
         .endif
 
-        mov [ebx].ballObj.pos.y, eax        ; 我們移動 y
+        mov [ebx].ballObj.pos.y, eax
         
         assume ecx:nothing
         ret 
     moveBall endp
-
-
 
 
     resetLife proc
@@ -449,49 +496,50 @@ start:
     countBricks endp
 
     ; !purpose: check if two objects collided
-    ; @param: object1's position and size, object2's position and size
-    ; return value: TRUE if collided, otherwise FALSE
+    ;* @param: object1's position and size, object2's position and size
+    ;* return value: TRUE if collided, otherwise FALSE
     collide proc obj1Pos:point, obj2Pos:point, obj1Size:point, obj2Size:point
+        ;* add object's position axises with its sizes 
+        ;* object1
         mov eax, obj1Pos.x
-        add eax, obj1Size.x                    ; pos1 + 大小
-        ;eax:玩家的右邊界
+        add eax, obj1Size.x
+        ;* object2
         mov ebx, obj2Pos.x
-        sub ebx, obj2Size.x                    ; pos2 - 大小
-        ;ebx:球的左邊界
+        sub ebx, obj2Size.x
+        ;* there shall have three threds to deal with the collision
+        ;* compare the right side 
         .if eax > ebx
-        mov eax, obj1Pos.x
-            sub eax, obj1Size.x                    ; pos1 - 大小
-
+            mov eax, obj1Pos.x
+            sub eax, obj1Size.x
             mov ebx, obj2Pos.x
-            add ebx, obj2Size.x                    ; pos2 + 大小
+            add ebx, obj2Size.x
+            ;then compare the left side
             .if eax < ebx
-                mov edx, TRUE
+                mov cl, TRUE
             .else
-                mov edx, FALSE
+                mov cl, FALSE
             .endif
         .else
-            mov edx, FALSE
+            mov cl, FALSE
         .endif
-
         mov eax, obj1Pos.y
-        add eax, obj1Size.y                    ; pos1 + 大小
+        add eax, obj1Size.y
         ;eax:玩家的下邊界
         mov ebx, obj2Pos.y
-        sub ebx, obj2Size.y                    ; pos2 - 大小
+        sub ebx, obj2Size.y
         ;ebx:球的上邊界
         .if eax > ebx
             mov eax, obj1Pos.y
-            sub eax, obj1Size.y                    ; pos1 - 大小
-
+            sub eax, obj1Size.y
             mov ebx, obj2Pos.y
-            add ebx, obj2Size.y                    ; pos2 + 大小
+            add ebx, obj2Size.y
             .if eax < ebx
-                mov ecx, TRUE
+                mov ch, TRUE
             .else
-                mov ecx, FALSE
+                mov ch, FALSE
             .endif
         .else
-            mov ecx, FALSE
+            mov ch, FALSE
         .endif
         pop ebx
         pop eax
@@ -503,22 +551,20 @@ start:
     ; return value:
     ballColliding proc
         invoke collide, player2.playerObj.pos, ball.ballObj.pos, player2.sizePoint, ball.sizePoint
-        .if edx == TRUE  && ecx == TRUE
+        .if ch == TRUE  && cl == TRUE
             mov eax, player2.playerObj.speed.x
             .if eax == 0                                    ; 如果玩家是靜止的
-                .if ball.ballObj.speed.x == 0
-                    add eax, -2
-                .else
-                    mov eax, ball.ballObj.speed.x               ; 只是被球擊中->對方速度的反向射回去
+                mov eax, ball.ballObj.speed.x
+                .if ultimate_player1 == 1
+                    add eax, 25
+                    mov ultimate_player1, 0
                 .endif
             .else                                           ; 如果玩家在移動
-                mov eax, ball.ballObj.speed.x
-
-                ;   add eax, player2.playerObj.speed.x          ; 我們根據你的速度踢(根據玩家x的水平速度)
-                ; .if ultimate_player1 == 1
-                ;     add eax, 50
-                ;     mov ultimate_player1, 0
-                ; .endif
+                add eax, player2.playerObj.speed.x          
+                .if ultimate_player1 == 1
+                    add eax, 25
+                    mov ultimate_player1, 0
+                .endif
             .endif
             mov ball.ballObj.speed.y, -25
             mov ball.ballObj.speed.x, eax       
@@ -526,6 +572,51 @@ start:
         ret
     ballColliding endp
 
+    brickCollide proc
+        ;original:invoke collide, ball.ballObj.pos,  brick.brickObj.pos, ball.sizePoint, brick.sizePoint
+        ;!rewrite
+        mov eax, ball.ballObj.pos.x
+        add eax, ball.sizePoint.x
+        mov ebx, brick.brickObj.pos.x
+        ;sub ebx, brick.sizePoint.x
+        .if eax > ebx
+            mov eax, ball.ballObj.pos.x
+            sub eax, ball.sizePoint.x
+            mov ebx, brick.brickObj.pos.x
+            add ebx, 640
+            .if eax < ebx
+                mov cl, TRUE
+            .else
+                mov cl, FALSE
+            .endif
+        .else
+            mov cl, FALSE
+        .endif
+        mov eax, ball.ballObj.pos.y
+        add eax, ball.sizePoint.y
+        mov ebx, brick.brickObj.pos.y
+        ;sub ebx, brick.sizePoint.y
+        .if eax > ebx
+            mov eax, ball.ballObj.pos.y
+            sub eax, ball.sizePoint.y
+            mov ebx, brick.brickObj.pos.y
+            add ebx, 120
+            .if eax < ebx
+                mov ch, TRUE
+            .else
+                mov ch, FALSE
+            .endif
+        .else
+            mov ch, FALSE
+        .endif
+        ;!rewrite end
+        .if ch == TRUE  && cl == TRUE
+        mov eax, ball.ballObj.speed.y
+        neg eax
+        mov ball.ballObj.speed.y, eax
+        .endif
+        ret
+    brickCollide endp
 
 
 
@@ -538,7 +629,8 @@ start:
                 invoke Sleep, 30               
                 invoke movePlayer, addr player2
                 ; TODO : 呼叫碰撞
-                invoke ballColliding
+                invoke brickCollide     ;collide between brick and ball
+                invoke ballColliding    ;collide between ball and bar and boarder
                 invoke moveBall, addr ball
                 invoke countBricks
 
@@ -725,13 +817,9 @@ start:
                 mov direction, -1
                 mov keydown, -1
             .endif
-
         .else
             invoke DefWindowProc,hWin,uMsg,wParam,lParam ;DefWindowProc 函數調用默認窗口過程來為應用程序不處理的任何窗口消息提供默認處理
         .endif
         ret
-
     WndProc endp
-
-
 end start
