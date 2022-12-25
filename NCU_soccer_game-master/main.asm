@@ -414,9 +414,8 @@ start:
     ; @params:
     ; return value:
     ballColliding proc
-        ; first part: deal with the collition of the bar and the ball
         invoke collide, player2.playerObj.pos, ball.ballObj.pos, player2.sizePoint, ball.sizePoint
-        .if edx == TRUE  && ecx == TRUE                      ; 相撞
+        .if edx == TRUE  && ecx == TRUE
             mov eax, player2.playerObj.speed.x
             .if eax == 0                                    ; 如果玩家是靜止的
                 mov eax, ball.ballObj.speed.x               ; 只是被球擊中->對方速度的反向射回去
@@ -424,41 +423,17 @@ start:
                     add eax, 50
                     mov ultimate_player1, 0
                 .endif
-                dec eax
-                dec eax
-                neg eax
+                ;neg eax
             .else                                           ; 如果玩家在移動
                 add eax, player2.playerObj.speed.x          ; 我們根據你的速度踢(根據玩家x的水平速度)
                 .if ultimate_player1 == 1
                     add eax, 50
                     mov ultimate_player1, 0
                 .endif
-                dec eax
-                dec eax
-                dec eax
             .endif
             mov ball.ballObj.speed.y, -20
             mov ball.ballObj.speed.x, eax       
         .endif
-
-        ; second part: deal with the collition of the box and the bar
-        ;invoke collide, player2.playerObj.pos, ball.ballObj.pos, player2.sizePoint, ball.sizePoint
-        ;.if edx == TRUE  && ecx == TRUE                      ; 相撞 
-        ;    mov eax, player2.playerObj.speed.x
-        ;    .if eax == 0
-        ;        mov eax, ball.ballObj.speed.x
-        ;        dec eax
-        ;        dec eax
-        ;        neg eax
-        ;    .else
-        ;        add eax, player2.playerObj.speed.x
-        ;        dec eax
-        ;        dec eax
-        ;        dec eax
-        ;    .endif
-        ;    mov ball.ballObj.speed.y, -15
-        ;    mov ball.ballObj.speed.x, eax          
-        ;.endif
         ret
     ballColliding endp
 
