@@ -24,7 +24,7 @@ szText MACRO Name, Text:VARARG
     p2 equ 1002
     CREF_TRANSPARENT  EQU 0FF00FFh
     CREF_TRANSPARENT2 EQU 0FF0000h
-    PLAYER_SPEED  EQU  10 ;可以控制左右移動的速度
+    PLAYER_SPEED  EQU  15 ;可以控制左右移動的速度
 
 .data
     ; NOTSURE
@@ -42,8 +42,8 @@ szText MACRO Name, Text:VARARG
     ultimate_player1    BYTE    0
     brick_manager       dd      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
     brick_amount        dd      24
-    life               BYTE    3
-    GAMESTATE           BYTE    1      ;game status
+    life                BYTE     3
+    GAMESTATE           BYTE     1      ;game status
     ;遊戲狀態
         ; 1 - menu
         ; 2 - in_game
@@ -348,7 +348,7 @@ start:
         mov ball.ballObj.speed.x, 0
         mov ball.ballObj.speed.y, 0
         mov ball.ballObj.pos.x, 420
-        mov ball.ballObj.pos.y, 100
+        mov ball.ballObj.pos.y, 250
         ret
     resetBall endp
 
@@ -505,7 +505,7 @@ start:
         add eax, obj1Size.x
         ;* object2
         mov ebx, obj2Pos.x
-        sub ebx, obj2Size.x
+        ;sub ebx, obj2Size.x
         ;* there shall have three threds to deal with the collision
         ;* compare the right side 
         .if eax > ebx
@@ -526,7 +526,7 @@ start:
         add eax, obj1Size.y
         ;eax:玩家的下邊界
         mov ebx, obj2Pos.y
-        sub ebx, obj2Size.y
+        ;sub ebx, obj2Size.y
         ;ebx:球的上邊界
         .if eax > ebx
             mov eax, obj1Pos.y
@@ -611,9 +611,21 @@ start:
         .endif
         ;!rewrite end
         .if ch == TRUE  && cl == TRUE
-        mov eax, ball.ballObj.speed.y
-        neg eax
-        mov ball.ballObj.speed.y, eax
+            ;deal with the speed of ball
+            mov eax, ball.ballObj.speed.y
+            neg eax
+            mov ball.ballObj.speed.y, eax
+            ;deal with the brick, use ball's x position to decide which one of bricks is hit
+            mov eax, ball.ballObj.pos.x
+            sub eax, brick.brickObj.pos.x
+            mov ebx, 100
+            ;div ebx
+            mov ecx, eax
+            ;when we get the index of the hitten brick, we can use it to change the brick's state
+            .if brick_manager[ecx] == 1
+                ;mov brick_manager[ecx], 0
+                ;dec brick_amount
+            .endif
         .endif
         ret
     brickCollide endp
