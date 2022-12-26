@@ -43,7 +43,7 @@ brickStruct ends
     BAR_HEIGHT      EQU 39
     BAR_HALF_HEIGHT EQU BRICK_HEIGHT / 2
 
-    BALL_SIZE       EQU 40
+    BALL_SIZE       EQU 30
     BALL_HALF_SIZE  EQU BALL_SIZE / 2
 
     BRICK_WIDTH      EQU 90

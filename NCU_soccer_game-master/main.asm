@@ -24,7 +24,7 @@ szText MACRO Name, Text:VARARG
     p2 equ 1002
     CREF_TRANSPARENT  EQU 0FF00FFh
     CREF_TRANSPARENT2 EQU 0FF0000h
-    PLAYER_SPEED  EQU  15 ;可以控制左右移動的速度
+    PLAYER_SPEED  EQU  18 ;可以控制左右移動的速度
 
 .data
     ; NOTSURE
@@ -42,7 +42,7 @@ szText MACRO Name, Text:VARARG
     ultimate_player1    BYTE    0
     ;brick_manager       dd      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
     ;brick_amount        dd      24
-    brick_manager       dd      1, 1, 1, 1, 1, 1, 1, 1 
+    brick_manager       dd      1, 1, 1, 1, 1, 1, 1, 0 
     brick_amount        dd      8
     life                BYTE     3
     GAMESTATE           BYTE     1      ;game status
@@ -137,8 +137,24 @@ start:
         .elseif(GAMESTATE == 4)
             invoke SelectObject, _hMemDC2, loseBmp
         .endif
-
         invoke BitBlt, _hMemDC, 0, 0, 910, 522, _hMemDC2, 0, 0, SRCCOPY     ;BitBlt 函數執行將與像素矩形相對應的顏色數據從指定的源設備內容到目標設備內容的bit-block傳輸。
+
+        .if(GAMESTATE == 2)
+        ; paint score
+            ;invoke SetBkMode, _hMemDC, TRANSPARENT
+            invoke SetTextColor,_hMemDC,00FF8800h
+        
+            invoke wsprintf, addr buffer, chr$("life remain = %d"), life
+            mov   rect.left, 360
+            mov   rect.top , 900
+            mov   rect.right, 490
+            mov   rect.bottom, 50  
+
+            invoke DrawText, _hMemDC, addr buffer, -1, \
+                addr rect, DT_CENTER or DT_VCENTER or DT_SINGLELINE
+            ;invoke ReleaseDC, hWin, _hMemDC
+        .endif
+
         ret
 
     paintBackground endp
@@ -359,7 +375,7 @@ start:
     resetPositions proc
         mov player2.playerObj.pos.x, 500
         mov player2.playerObj.pos.y, 500
-        invoke resetBall
+        ; invoke resetBall
         ret
     resetPositions endp
 
@@ -369,7 +385,7 @@ start:
         push esi
         push edi
         mov esi, OFFSET brick_manager
-        mov ecx, 8
+        mov ecx, 7
         .while ecx > 0
             mov edi, 1
             mov [esi], edi
@@ -434,7 +450,7 @@ start:
         add ax, cx
 
         ; if fall out of the bottom of the screen
-        .if eax > 450
+        .if eax > 443
             invoke resetBall
             invoke resetPositions
             sub life, 1
@@ -476,7 +492,7 @@ start:
         push ecx
         push edi
 
-        mov ecx, 8
+        mov ecx, 7
         mov esi, OFFSET brick_manager
         mov eax, 0
         .while ecx > 0
@@ -602,7 +618,7 @@ start:
             mov eax, ball.ballObj.pos.y
             sub eax, ball.sizePoint.y
             mov ebx, brick.brickObj.pos.y
-            add ebx, 120
+            add ebx, 60
             .if eax < ebx
                 mov ch, TRUE
             .else
@@ -620,18 +636,19 @@ start:
             mov ecx, 100
             div ecx
             mov ecx, eax
-            mov brick_manager[ecx*4], 0
+            
             ;mov ecx, 0
             ;when we get the index of the hitten brick, we can use it to change the brick's state
-            ;.if brick_manager[ecx*4] == 1
-            ;    mov brick_manager[ecx*4], 1
-            ;    dec brick_amount
-            ;.endif
+            .if brick_manager[ecx*4] == 1
+                ;mov brick_manager[ecx*4], 1
+                mov brick_manager[ecx*4], 0
+                mov eax, ball.ballObj.speed.y
+                neg eax
+                mov ball.ballObj.speed.y, eax
+                dec brick_amount
+            .endif
             ;deal with the speed of ball
-            mov eax, ball.ballObj.speed.y
-            neg eax
-            mov ball.ballObj.speed.y, eax
-            ;deal with the brick, use ball's x position to decide which one of bricks is hit
+            
             
         .endif
         ret
