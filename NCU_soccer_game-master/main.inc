@@ -39,7 +39,7 @@ brickStruct ends
 
 .const
     BAR_WIDTH      EQU 232
-    BAR_HALF_WIDTH EQU BRICK_WIDTH / 2
+    BAR_HALF_WIDTH EQU BAR_WIDTH / 2
     BAR_HEIGHT      EQU 39
     BAR_HALF_HEIGHT EQU BRICK_HEIGHT / 2
 
@@ -65,6 +65,6 @@ brickStruct ends
 
 .data
     player2 player <<<500, 500>,  <0, 0>>, <232/2, 39>, 0, D_LEFT, 0 >
-    ball ballStruct <<<420, 100>,  <0, 0>>>
+    ball ballStruct <<<420, 250>,  <0, 0>>>
     brick brickStruct <<<95, 50>, <0, 0>>, <0, 0>>
     auxiliar_point point <0, 0>
