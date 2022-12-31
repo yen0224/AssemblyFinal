@@ -164,17 +164,17 @@ start:
         ; Bar
         invoke SelectObject, _hMemDC2, p2_spritesheet
 
-        movsx eax, player2.direction
+        movsx eax, bar.direction
         mov ebx, BAR_HALF_WIDTH
         mul ebx
         mov ecx, eax
 
-        invoke isStopped, addr player2
+        invoke isStopped, addr bar
 
         mov edx, 0
 
-        mov eax, player2.playerObj.pos.x
-        mov ebx, player2.playerObj.pos.y
+        mov eax, bar.playerObj.pos.x
+        mov ebx, bar.playerObj.pos.y
         sub eax, BAR_HALF_WIDTH
         sub ebx, BAR_HALF_HEIGHT
 
@@ -183,7 +183,7 @@ start:
         ; Ball
         invoke SelectObject, _hMemDC2, ballBmp
 
-        movsx eax, player2.direction
+        movsx eax, bar.direction
         mov ebx, BALL_SIZE
         mul ebx
         mov ecx, eax
@@ -211,7 +211,7 @@ start:
 
             invoke SelectObject, _hMemDC2, brickBmp
 
-            movsx eax, player2.direction
+            movsx eax, bar.direction
             mov ebx, BRICK_HALF_WIDTH
             mul ebx
             mov ecx, eax
@@ -242,7 +242,7 @@ start:
 
         ;    invoke SelectObject, _hMemDC2, brickBmp
 
-        ;   movsx eax, player2.direction
+        ;   movsx eax, bar.direction
           ;  mov ebx, BRICK_HALF_WIDTH
            ; mul ebx
             ;mov ecx, eax
@@ -271,7 +271,7 @@ start:
         ;        jmp nextThree
         ;    .endif
         ;    invoke SelectObject, _hMemDC2, brickBmp
-        ;    movsx eax, player2.direction
+        ;    movsx eax, bar.direction
         ;    mov ebx, BRICK_HALF_WIDTH
         ;    mul ebx
         ;    mov ecx, eax
@@ -373,8 +373,8 @@ start:
 
     ; !purpose: reset the position of the bar
     resetPositions proc
-        mov player2.playerObj.pos.x, 500
-        mov player2.playerObj.pos.y, 500
+        mov bar.playerObj.pos.x, 500
+        mov bar.playerObj.pos.y, 500
         ; invoke resetBall
         ret
     resetPositions endp
@@ -568,9 +568,9 @@ start:
     ; @params:
     ; return value:
     ballColliding proc
-        invoke collide, player2.playerObj.pos, ball.ballObj.pos, player2.sizePoint, ball.sizePoint
+        invoke collide, bar.playerObj.pos, ball.ballObj.pos, bar.sizePoint, ball.sizePoint
         .if ch == TRUE  && cl == TRUE
-            mov eax, player2.playerObj.speed.x
+            mov eax, bar.playerObj.speed.x
             .if eax == 0                                    ; 如果玩家是靜止的
                 mov eax, ball.ballObj.speed.x
                 .if ultimate_player1 == 1
@@ -578,7 +578,7 @@ start:
                     mov ultimate_player1, 0
                 .endif
             .else                                           ; 如果玩家在移動
-                add eax, player2.playerObj.speed.x          
+                add eax, bar.playerObj.speed.x          
                 .if ultimate_player1 == 1
                     add eax, 25
                     mov ultimate_player1, 0
@@ -663,7 +663,7 @@ start:
         game:
             .while GAMESTATE == 2
                 invoke Sleep, 30               
-                invoke movePlayer, addr player2
+                invoke movePlayer, addr bar
                 ; TODO : 呼叫碰撞
                 invoke brickCollide     ;collide between brick and ball
                 invoke ballColliding    ;collide between ball and bar and boarder
@@ -820,7 +820,7 @@ start:
             .endif
 
             .if direction != -1
-                invoke changePlayerSpeed, ADDR player2, direction, keydown
+                invoke changePlayerSpeed, ADDR bar, direction, keydown
                 mov direction, -1
                 mov keydown, -1
             .endif            
@@ -849,7 +849,7 @@ start:
             .endif
 
             .if direction != -1
-                invoke changePlayerSpeed, ADDR player2, direction, keydown
+                invoke changePlayerSpeed, ADDR bar, direction, keydown
                 mov direction, -1
                 mov keydown, -1
             .endif

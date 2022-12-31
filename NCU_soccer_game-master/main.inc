@@ -64,7 +64,7 @@ brickStruct ends
     MAX_GOALS EQU 3
 
 .data
-    player2 player <<<500, 500>,  <0, 0>>, <232/2, 39>, 0, D_LEFT, 0 >
+    bar player <<<500, 500>,  <0, 0>>, <232/2, 39>, 0, D_LEFT, 0 >
     ball ballStruct <<<420, 250>,  <0, 0>>>
     brick brickStruct <<<95, 50>, <0, 0>>, <0, 0>>
     auxiliar_point point <0, 0>
