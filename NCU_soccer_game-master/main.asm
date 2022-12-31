@@ -6,7 +6,7 @@ include main.inc
 
 WinMain PROTO :DWORD,:DWORD,:DWORD,:DWORD
 
-; 不確定是什麼 www
+; 不確定是什麼
 szText MACRO Name, Text:VARARG
     LOCAL lbl
         jmp lbl
@@ -111,12 +111,12 @@ start:
     invoke WinMain,hInstance,NULL,CommandLine,SW_SHOWDEFAULT    
     invoke ExitProcess,eax
 
-    ; 判斷 playerObj 的 speed 是否為 0, 設定 stopped 為 1
+    ; 判斷 barObj 的 speed 是否為 0, 設定 stopped 為 1
     isStopped proc addrPlayer:dword
-        assume edx:ptr player
+        assume edx:ptr barStruct
         mov edx, addrPlayer
 
-        .if [edx].playerObj.speed.x == 0  && [edx].playerObj.speed.y == 0
+        .if [edx].barObj.speed.x == 0
             mov [edx].stopped, 1
         .endif
 
@@ -173,8 +173,8 @@ start:
 
         mov edx, 0
 
-        mov eax, bar.playerObj.pos.x
-        mov ebx, bar.playerObj.pos.y
+        mov eax, bar.barObj.pos.x
+        mov ebx, bar.barObj.pos.y
         sub eax, BAR_HALF_WIDTH
         sub ebx, BAR_HALF_HEIGHT
 
@@ -333,25 +333,25 @@ start:
 
     ; NOTSURE
     changePlayerSpeed proc uses eax addrPlayer : DWORD, direction : BYTE, keydown : BYTE
-        assume eax: ptr player
+        assume eax: ptr barStruct
         mov eax, addrPlayer
 
         .if keydown == FALSE
             .if direction == 1 ;a
-                .if [eax].playerObj.speed.x > 7fh
-                    mov [eax].playerObj.speed.x, 0 
+                .if [eax].barObj.speed.x > 7fh
+                    mov [eax].barObj.speed.x, 0 
                 .endif
             .elseif direction == 3 ;d
-                .if [eax].playerObj.speed.x < 80h
-                    mov [eax].playerObj.speed.x, 0 
+                .if [eax].barObj.speed.x < 80h
+                    mov [eax].barObj.speed.x, 0 
                 .endif
             .endif
         .else
             .if direction == 2 ; a
-                mov [eax].playerObj.speed.x, -PLAYER_SPEED
+                mov [eax].barObj.speed.x, -PLAYER_SPEED
                 mov [eax].stopped, 0
             .elseif direction == 3 ; d
-                mov [eax].playerObj.speed.x, PLAYER_SPEED
+                mov [eax].barObj.speed.x, PLAYER_SPEED
                 mov [eax].stopped, 0
             .endif
         .endif
@@ -373,8 +373,8 @@ start:
 
     ; !purpose: reset the position of the bar
     resetPositions proc
-        mov bar.playerObj.pos.x, 500
-        mov bar.playerObj.pos.y, 500
+        mov bar.barObj.pos.x, 500
+        mov bar.barObj.pos.y, 500
         ; invoke resetBall
         ret
     resetPositions endp
@@ -399,7 +399,7 @@ start:
 
 
     movePlayer proc uses eax addrPlayer:dword
-        assume edx:ptr player
+        assume edx:ptr barStruct
         mov edx, addrPlayer
         assume ecx:ptr gameObject
         mov ecx, addrPlayer
@@ -568,9 +568,9 @@ start:
     ; @params:
     ; return value:
     ballColliding proc
-        invoke collide, bar.playerObj.pos, ball.ballObj.pos, bar.sizePoint, ball.sizePoint
+        invoke collide, bar.barObj.pos, ball.ballObj.pos, bar.sizePoint, ball.sizePoint
         .if ch == TRUE  && cl == TRUE
-            mov eax, bar.playerObj.speed.x
+            mov eax, bar.barObj.speed.x
             .if eax == 0                                    ; 如果玩家是靜止的
                 mov eax, ball.ballObj.speed.x
                 .if ultimate_player1 == 1
@@ -578,7 +578,7 @@ start:
                     mov ultimate_player1, 0
                 .endif
             .else                                           ; 如果玩家在移動
-                add eax, bar.playerObj.speed.x          
+                add eax, bar.barObj.speed.x          
                 .if ultimate_player1 == 1
                     add eax, 25
                     mov ultimate_player1, 0

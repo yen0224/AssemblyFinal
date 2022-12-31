@@ -18,14 +18,14 @@ gameObject struct
     speed   point <> ; 水平和垂直速度
 gameObject ends
 
-player struct
-    playerObj             gameObject <>
+barStruct struct
+    barObj             gameObject <>
     sizePoint             point <>
     stopped               BYTE 0
     jumping               BYTE 0
     direction             BYTE 0
     goals                 dd   0
-player ends
+barStruct ends
 
 ballStruct struct
     ballObj     gameObject <>
@@ -64,7 +64,7 @@ brickStruct ends
     MAX_GOALS EQU 3
 
 .data
-    bar player <<<500, 500>,  <0, 0>>, <232/2, 39>, 0, D_LEFT, 0 >
+    bar barStruct <<<500, 500>,  <0, 0>>, <232/2, 39>, 0, D_LEFT, 0 >
     ball ballStruct <<<420, 250>,  <0, 0>>>
     brick brickStruct <<<95, 50>, <0, 0>>, <0, 0>>
     auxiliar_point point <0, 0>
