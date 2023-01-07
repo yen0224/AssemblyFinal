@@ -25,6 +25,7 @@ szText MACRO Name, Text:VARARG
     CREF_TRANSPARENT  EQU 0FF00FFh
     CREF_TRANSPARENT2 EQU 0FF0000h
     PLAYER_SPEED  EQU  18 ;可以控制左右移動的速度
+    PLAYER_NEG_SPEED  EQU  -18
     brick_amount        EQU      24
 
 .data
@@ -153,8 +154,13 @@ start:
 
         ; paint bricks remain
             invoke SetTextColor,_hMemDC,00FF8800h
-        
+            mov edx, 0
+            mov eax, ball.ballObj.pos.x
+            sub eax, brick.brickObj.pos.x
+            mov ecx, 100
+            div ecx
             invoke wsprintf, addr buffer, chr$("bricks remain = %d"), brick_left
+            ;invoke wsprintf, addr buffer, chr$("quotion = %d"), brick_manager[4*eax]
             mov   rect.left, 360
             mov   rect.top , 935
             mov   rect.right, 490
@@ -375,16 +381,15 @@ start:
         mov ball.ballObj.speed.x, 0
         mov ball.ballObj.speed.y, 0
         mov ball.ballObj.pos.x, 420
-        mov ball.ballObj.pos.y, 250
+        mov ball.ballObj.pos.y, 381
         ret
     resetBall endp
 
 
     ; !purpose: reset the position of the bar
     resetPositions proc
-        mov bar.barObj.pos.x, 500
-        mov bar.barObj.pos.y, 500
-        ; invoke resetBall
+        mov bar.barObj.pos.x, 420
+        mov bar.barObj.pos.y, 420
         ret
     resetPositions endp
 
@@ -424,7 +429,7 @@ start:
         mov ebx, [ecx].speed.x
         add eax, ebx
         ;  如果玩家在屏幕範圍內，我們才改變它的位置
-        .if  eax < 890 - 232/2
+        .if  eax < 890 - BAR_WIDTH/2 && eax > 0 + BAR_WIDTH/2
             mov [ecx].pos.x, eax
         .endif
 
@@ -448,12 +453,6 @@ start:
         assume ebx:ptr ballStruct
         mov ebx, addrBall
 
-        .if [ebx].ballObj.pos.y < 443       ;如果球在空中，我們拉它（重力）
-            mov ecx, [ebx].ballObj.speed.y
-            inc ecx
-            mov [ebx].ballObj.speed.y, ecx
-        .endif
-    
         ;我們增加速度 y;eax 上的速度增量
         mov eax, [ebx].ballObj.pos.y
         mov ecx, [ebx].ballObj.speed.y
@@ -463,7 +462,16 @@ start:
         .if eax > 443
             invoke resetBall
             invoke resetPositions
+            mov eax, [ebx].ballObj.pos.y
+            mov ecx, [ebx].ballObj.speed.y
             sub life, 1
+        .endif
+
+        ; if fall out of the top of the screen
+        .if eax < 30
+            mov ecx, [ebx].ballObj.speed.y
+            neg ecx
+            mov [ebx].ballObj.speed.y, ecx
         .endif
 
         ; X AXIS ______________
@@ -590,28 +598,25 @@ start:
             .else                                           ; 如果玩家在移動
                 add eax, bar.barObj.speed.x          
                 .if ultimate_player1 == 1
-                    add eax, 25
+                    add eax, PLAYER_SPEED
                     mov ultimate_player1, 0
                 .endif
             .endif
-            mov ball.ballObj.speed.y, -25
+            mov ball.ballObj.speed.y, PLAYER_NEG_SPEED
             mov ball.ballObj.speed.x, eax       
         .endif
         ret
     ballColliding endp
 
     brickCollide proc
-        ;original:invoke collide, ball.ballObj.pos,  brick.brickObj.pos, ball.sizePoint, brick.sizePoint
-        ;!rewrite
         mov eax, ball.ballObj.pos.x
-        add eax, ball.sizePoint.x
+        add eax, BALL_HALF_SIZE
         mov ebx, brick.brickObj.pos.x
-        ;sub ebx, brick.sizePoint.x
         .if eax > ebx
             mov eax, ball.ballObj.pos.x
             sub eax, ball.sizePoint.x
             mov ebx, brick.brickObj.pos.x
-            add ebx, 640
+            add ebx, 800
             .if eax < ebx
                 mov cl, TRUE
             .else
@@ -628,7 +633,7 @@ start:
             mov eax, ball.ballObj.pos.y
             sub eax, ball.sizePoint.y
             mov ebx, brick.brickObj.pos.y
-            add ebx, 60
+            add ebx, BRICK_HEIGHT
             .if eax < ebx
                 mov ch, TRUE
             .else
@@ -637,11 +642,11 @@ start:
         .else
             mov ch, FALSE
         .endif
-        ;!rewrite end
+        
         .if ch == TRUE  && cl == TRUE
             mov edx, 0
             mov eax, ball.ballObj.pos.x
-            add eax, ball.sizePoint.x
+            ;add eax, BALL_HALF_SIZE
             sub eax, brick.brickObj.pos.x
             mov ecx, 100
             div ecx
@@ -664,14 +669,13 @@ start:
     brickCollide endp
 
 
-
     ; NOTSURE
     gameManager proc p:dword
         LOCAL area:RECT
 
         game:
             .while GAMESTATE == 2
-                invoke Sleep, 30               
+                invoke Sleep, 30
                 invoke movePlayer, addr bar
                 ; TODO : 呼叫碰撞
                 invoke brickCollide     ;collide between brick and ball
@@ -820,6 +824,12 @@ start:
                 .endif                
             .endif
 
+            ; [Space]
+            .if (wParam == 32) && (GAMESTATE == 2)
+                invoke resetBall
+                mov ball.ballObj.speed.y, PLAYER_NEG_SPEED
+            .endif
+
         ; 當釋放非系統鍵時
         .elseif uMsg == WM_KEYUP            
 
@@ -840,18 +850,6 @@ start:
            
         ;當按下非系統鍵時
         .elseif uMsg == WM_KEYDOWN
-            
-            .if (wParam == 51h) ;Q:可以讓球再次彈起
-                mov ball.ballObj.speed.x, 0
-                mov ball.ballObj.speed.y, 0
-                mov ball.ballObj.pos.x, 420
-                mov ball.ballObj.pos.y, 100
-
-            .elseif (wParam == 45h) ;E
-                mov ultimate_player1, 1
-
-            .endif
-
             .if (wParam == VK_LEFT) ; 左
                 mov keydown, TRUE
                 mov direction, 2
