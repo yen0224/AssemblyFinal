@@ -25,6 +25,7 @@ szText MACRO Name, Text:VARARG
     CREF_TRANSPARENT  EQU 0FF00FFh
     CREF_TRANSPARENT2 EQU 0FF0000h
     PLAYER_SPEED  EQU  18 ;可以控制左右移動的速度
+    brick_amount        EQU      24
 
 .data
     ; NOTSURE
@@ -40,10 +41,8 @@ szText MACRO Name, Text:VARARG
     brickBmp        dd  0
     paintstruct     PAINTSTRUCT <>      ;內有ballObj、sizePoint
     ultimate_player1    BYTE    0
-    ;brick_manager       dd      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-    ;brick_amount        dd      24
-    brick_manager       dd      1, 1, 1, 1, 1, 1, 1, 0 
-    brick_amount        dd      8
+    brick_manager       dd      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+    brick_left          dd    24
     life                BYTE     3
     GAMESTATE           BYTE     1      ;game status
     ;遊戲狀態
@@ -141,7 +140,6 @@ start:
 
         .if(GAMESTATE == 2)
         ; paint score
-            ;invoke SetBkMode, _hMemDC, TRANSPARENT
             invoke SetTextColor,_hMemDC,00FF8800h
         
             invoke wsprintf, addr buffer, chr$("life remain = %d"), life
@@ -152,7 +150,18 @@ start:
 
             invoke DrawText, _hMemDC, addr buffer, -1, \
                 addr rect, DT_CENTER or DT_VCENTER or DT_SINGLELINE
-            ;invoke ReleaseDC, hWin, _hMemDC
+
+        ; paint bricks remain
+            invoke SetTextColor,_hMemDC,00FF8800h
+        
+            invoke wsprintf, addr buffer, chr$("bricks remain = %d"), brick_left
+            mov   rect.left, 360
+            mov   rect.top , 935
+            mov   rect.right, 490
+            mov   rect.bottom, 50  
+
+            invoke DrawText, _hMemDC, addr buffer, -1, \
+                addr rect, DT_CENTER or DT_VCENTER or DT_SINGLELINE
         .endif
 
         ret
@@ -231,63 +240,63 @@ start:
         mov brick.brickObj.pos.x, 95
 
         ; Brick - Row 2
-        ;mov brick.brickObj.pos.y, 100
-        ;mov ecx, 8
-        ;paintBrickTwo:
-        ;    push ecx
-        ;    mov edi, [esi]
-        ;    .if (edi == 0)
-        ;        jmp nextTwo
-        ;    .endif
+        mov brick.brickObj.pos.y, 100
+        mov ecx, 8
+        paintBrickTwo:
+           push ecx
+           mov edi, [esi]
+           .if (edi == 0)
+               jmp nextTwo
+           .endif
 
-        ;    invoke SelectObject, _hMemDC2, brickBmp
+           invoke SelectObject, _hMemDC2, brickBmp
 
-        ;   movsx eax, bar.direction
-          ;  mov ebx, BRICK_HALF_WIDTH
-           ; mul ebx
-            ;mov ecx, eax
-            ;mov edx, 0
+          movsx eax, bar.direction
+           mov ebx, BRICK_HALF_WIDTH
+           mul ebx
+            mov ecx, eax
+            mov edx, 0
 
-            ;mov eax, brick.brickObj.pos.x
-            ;mov ebx, brick.brickObj.pos.y
-            ;sub eax, BRICK_HALF_WIDTH
-            ;sub ebx, BRICK_HALF_HEIGHT
+            mov eax, brick.brickObj.pos.x
+            mov ebx, brick.brickObj.pos.y
+            sub eax, BRICK_HALF_WIDTH
+            sub ebx, BRICK_HALF_HEIGHT
 
-            ;invoke TransparentBlt, _hMemDC, eax, ebx, BRICK_WIDTH, BRICK_HEIGHT, _hMemDC2, edx, ecx, BRICK_WIDTH, BRICK_HEIGHT, 16777215
-            ;nextTwo :
-            ;    add brick.brickObj.pos.x, 100
-            ;    add esi, 4
-            ;    pop ecx
-        ;loop paintBrickTwo
-        ;mov brick.brickObj.pos.x, 95
+            invoke TransparentBlt, _hMemDC, eax, ebx, BRICK_WIDTH, BRICK_HEIGHT, _hMemDC2, edx, ecx, BRICK_WIDTH, BRICK_HEIGHT, 16777215
+            nextTwo :
+               add brick.brickObj.pos.x, 100
+               add esi, 4
+               pop ecx
+        loop paintBrickTwo
+        mov brick.brickObj.pos.x, 95
 
         ; Brick - Row 3
-        ;mov brick.brickObj.pos.y, 150
-        ;mov ecx, 8
-        ;paintBrickThree:
-        ;    push ecx
-        ;    mov edi, [esi]
-        ;    .if (edi == 0)
-        ;        jmp nextThree
-        ;    .endif
-        ;    invoke SelectObject, _hMemDC2, brickBmp
-        ;    movsx eax, bar.direction
-        ;    mov ebx, BRICK_HALF_WIDTH
-        ;    mul ebx
-        ;    mov ecx, eax
-        ;    mov edx, 0
-        ;    mov eax, brick.brickObj.pos.x
-        ;    mov ebx, brick.brickObj.pos.y
-        ;    sub eax, BRICK_HALF_WIDTH
-        ;    sub ebx, BRICK_HALF_HEIGHT
-        ;    invoke TransparentBlt, _hMemDC, eax, ebx, BRICK_WIDTH, BRICK_HEIGHT, _hMemDC2, edx, ecx, BRICK_WIDTH, BRICK_HEIGHT, 16777215
-        ;    nextThree :
-        ;        add brick.brickObj.pos.x, 100
-        ;        add esi, 4
-        ;        pop ecx
-        ;loop paintBrickThree
-        ;mov brick.brickObj.pos.x, 95
-        ;mov brick.brickObj.pos.y, 50
+        mov brick.brickObj.pos.y, 150
+        mov ecx, 8
+        paintBrickThree:
+           push ecx
+           mov edi, [esi]
+           .if (edi == 0)
+               jmp nextThree
+           .endif
+           invoke SelectObject, _hMemDC2, brickBmp
+           movsx eax, bar.direction
+           mov ebx, BRICK_HALF_WIDTH
+           mul ebx
+           mov ecx, eax
+           mov edx, 0
+           mov eax, brick.brickObj.pos.x
+           mov ebx, brick.brickObj.pos.y
+           sub eax, BRICK_HALF_WIDTH
+           sub ebx, BRICK_HALF_HEIGHT
+           invoke TransparentBlt, _hMemDC, eax, ebx, BRICK_WIDTH, BRICK_HEIGHT, _hMemDC2, edx, ecx, BRICK_WIDTH, BRICK_HEIGHT, 16777215
+           nextThree :
+               add brick.brickObj.pos.x, 100
+               add esi, 4
+               pop ecx
+        loop paintBrickThree
+        mov brick.brickObj.pos.x, 95
+        mov brick.brickObj.pos.y, 50
         ret
     paintPlayers endp
 
@@ -384,8 +393,9 @@ start:
     resetBrick proc
         push esi
         push edi
+        mov brick_left, brick_amount
         mov esi, OFFSET brick_manager
-        mov ecx, 7
+        mov ecx, brick_amount
         .while ecx > 0
             mov edi, 1
             mov [esi], edi
@@ -492,7 +502,7 @@ start:
         push ecx
         push edi
 
-        mov ecx, 7
+        mov ecx, brick_amount
         mov esi, OFFSET brick_manager
         mov eax, 0
         .while ecx > 0
@@ -503,7 +513,7 @@ start:
             add esi, 4
             dec ecx
         .endw
-        mov brick_amount, eax
+        mov brick_left, eax
 
         ; restore registers
         pop edi
@@ -645,7 +655,7 @@ start:
                 mov eax, ball.ballObj.speed.y
                 neg eax
                 mov ball.ballObj.speed.y, eax
-                dec brick_amount
+                dec brick_left
             .endif
             ;deal with the speed of ball
             
@@ -671,7 +681,7 @@ start:
                 invoke countBricks
 
                 ; if no bricks left, win
-                .if (brick_amount == 0)
+                .if (brick_left == 0)
                     mov GAMESTATE, 3
                 .ELSEIF (life == 0)
                     mov GAMESTATE, 4
@@ -795,13 +805,17 @@ start:
         .elseif uMsg == WM_CHAR
             .if (wParam == 13) ; [ENTER]
                 .if GAMESTATE == 1
+                    invoke resetBrick
+                    invoke resetPositions
+                    invoke resetBall
+                    invoke resetLife
                     mov GAMESTATE, 2
                 .elseif GAMESTATE == 2
                     mov GAMESTATE, 1
                 .elseif (GAMESTATE == 3) || (GAMESTATE == 4)
+                    invoke resetBrick
                     invoke resetPositions
                     invoke resetBall
-                    invoke resetBrick
                     invoke resetLife
                     mov GAMESTATE, 2
                 .endif                
