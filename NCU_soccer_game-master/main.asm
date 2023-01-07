@@ -34,7 +34,7 @@ szText MACRO Name, Text:VARARG
     buffer          db  256 dup(?)
     hBmp            dd  0
     menuBmp         dd  0
-    vitoria2Bmp     dd  0
+    victoryBmp     dd  0
     loseBmp         dd  0
     p2_spritesheet  dd  0               ;spritesheet載入圖片，灰色方框，資料壓縮
     ballBmp         dd  0
@@ -91,7 +91,7 @@ start:
     mov    menuBmp, eax
 
     invoke LoadBitmap, hInstance, victor_2
-    mov    vitoria2Bmp, eax
+    mov    victoryBmp, eax
 
     invoke LoadBitmap, hInstance, p2
     mov     p2_spritesheet, eax
@@ -132,7 +132,7 @@ start:
         .elseif(GAMESTATE == 2)
             invoke SelectObject, _hMemDC2, hBmp
         .elseif(GAMESTATE == 3)
-            invoke SelectObject, _hMemDC2, vitoria2Bmp
+            invoke SelectObject, _hMemDC2, victoryBmp
         .elseif(GAMESTATE == 4)
             invoke SelectObject, _hMemDC2, loseBmp
         .endif
@@ -340,7 +340,7 @@ start:
         ret
     paintThread endp   
 
-    ; NOTSURE
+    ; 使玩家不會走出邊界
     changePlayerSpeed proc uses eax addrPlayer : DWORD, direction : BYTE, keydown : BYTE
         assume eax: ptr barStruct
         mov eax, addrPlayer
@@ -413,11 +413,11 @@ start:
         mov edx, addrPlayer
         assume ecx:ptr gameObject
         mov ecx, addrPlayer
-        .if [edx].jumping == TRUE  ;如果玩家在跳躍(減速)
-            mov ebx, [ecx].speed.y
-            inc ebx
-            mov [ecx].speed.y, ebx
-        .endif
+        ;.if [edx].jumping == TRUE  ;如果玩家在跳躍(減速)
+        ;    mov ebx, [ecx].speed.y
+        ;    inc ebx
+        ;    mov [ecx].speed.y, ebx
+        ;.endif
 
         ; X AXIS ______________
         mov eax, [ecx].pos.x
@@ -433,14 +433,14 @@ start:
         mov ebx, [ecx].speed.y
         add ax, bx
 
-        .if eax >= 420
+        ;.if eax >= 420
             ;mov [edx].jumping, FALSE ;我們警告你他不能再跳躍
             mov eax, 420            ;我們把他放在地上
-        .endif
+        ;.endif
 
         mov [ecx].pos.y, eax
 
-        assume ecx:nothing
+        ;assume ecx:nothing
         ret
     movePlayer endp
 
@@ -658,7 +658,6 @@ start:
                 dec brick_left
             .endif
             ;deal with the speed of ball
-            
             
         .endif
         ret
