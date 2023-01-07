@@ -24,8 +24,8 @@ szText MACRO Name, Text:VARARG
     p2 equ 1002
     CREF_TRANSPARENT  EQU 0FF00FFh
     CREF_TRANSPARENT2 EQU 0FF0000h
-    PLAYER_SPEED  EQU  18 ;可以控制左右移動的速度
-    PLAYER_NEG_SPEED  EQU  -18
+    PLAYER_SPEED  EQU  10
+    PLAYER_NEG_SPEED  EQU  -10
     brick_amount        EQU      24
 
 .data
@@ -154,13 +154,7 @@ start:
 
         ; paint bricks remain
             invoke SetTextColor,_hMemDC,00FF8800h
-            mov edx, 0
-            mov eax, ball.ballObj.pos.x
-            sub eax, brick.brickObj.pos.x
-            mov ecx, 100
-            div ecx
             invoke wsprintf, addr buffer, chr$("bricks remain = %d"), brick_left
-            ;invoke wsprintf, addr buffer, chr$("quotion = %d"), brick_manager[4*eax]
             mov   rect.left, 360
             mov   rect.top , 935
             mov   rect.right, 490
@@ -340,7 +334,7 @@ start:
     ; NOTSURE
     paintThread proc p:DWORD
         .WHILE GAMESTATE != 5
-            invoke Sleep, 17 ; 60 FPS
+            invoke Sleep, 8 ; 60 FPS
             invoke InvalidateRect, hWnd, NULL, FALSE ;InvalidateRect函數將一個橢圓添加到指定窗口的更新區域。更新區域代表了必須重新繪製的窗口區域的部分。
         .endw
         ret
@@ -436,13 +430,8 @@ start:
         ; Y AXIS ______________
         mov eax, [ecx].pos.y
         mov ebx, [ecx].speed.y
-        add ax, bx
-
-        ;.if eax >= 420
-            ;mov [edx].jumping, FALSE ;我們警告你他不能再跳躍
-            mov eax, 420            ;我們把他放在地上
-        ;.endif
-
+        add eax, ebx
+        mov eax, 420
         mov [ecx].pos.y, eax
 
         ;assume ecx:nothing
@@ -534,22 +523,71 @@ start:
     ; !purpose: check if two objects collided
     ;* @param: object1's position and size, object2's position and size
     ;* return value: TRUE if collided, otherwise FALSE
-    collide proc obj1Pos:point, obj2Pos:point, obj1Size:point, obj2Size:point
-        ;* add object's position axises with its sizes 
-        ;* object1
-        mov eax, obj1Pos.x
-        add eax, obj1Size.x
-        ;* object2
-        mov ebx, obj2Pos.x
-        ;sub ebx, obj2Size.x
-        ;* there shall have three threds to deal with the collision
-        ;* compare the right side 
+    ; collide proc obj1Pos:point, obj2Pos:point, obj1Size:point, obj2Size:point
+    ;     ;* add object's position axises with its sizes 
+    ;     ;* object1
+    ;     mov eax, obj1Pos.x
+    ;     add eax, obj1Size.x
+    ;     ;* object2
+    ;     mov ebx, obj2Pos.x
+    ;     ;sub ebx, obj2Size.x
+    ;     ;* there shall have three threds to deal with the collision
+    ;     ;* compare the right side 
+    ;     .if eax > ebx
+    ;         mov eax, obj1Pos.x
+    ;         sub eax, obj1Size.x
+    ;         mov ebx, obj2Pos.x
+    ;         add ebx, obj2Size.x
+    ;         ;then compare the left side
+    ;         .if eax < ebx
+    ;             mov cl, TRUE
+    ;         .else
+    ;             mov cl, FALSE
+    ;         .endif
+    ;     .else
+    ;         mov cl, FALSE
+    ;     .endif
+    ;     mov eax, obj1Pos.y
+    ;     add eax, obj1Size.y
+    ;     ;eax:玩家的下邊界
+    ;     mov ebx, obj2Pos.y
+    ;     ;sub ebx, obj2Size.y
+    ;     ;ebx:球的上邊界
+    ;     .if eax > ebx
+    ;         mov eax, obj1Pos.y
+    ;         sub eax, obj1Size.y
+    ;         mov ebx, obj2Pos.y
+    ;         add ebx, obj2Size.y
+    ;         .if eax < ebx
+    ;             mov ch, TRUE
+    ;         .else
+    ;             mov ch, FALSE
+    ;         .endif
+    ;     .else
+    ;         mov ch, FALSE
+    ;     .endif
+    ;     pop ebx
+    ;     pop eax
+    ;     ret
+    ; collide endp
+
+    ; !purpose: deal with collision between ball and bar
+    ballColliding proc
+        ; preserve registers
+        push eax
+        push ebx
+        push ecx
+        push edx
+        
+        ;invoke collide, bar.barObj.pos, ball.ballObj.pos, bar.sizePoint, ball.sizePoint
+        mov eax, bar.barObj.pos.x
+        add eax, bar.sizePoint.x
+        mov ebx, ball.ballObj.pos.x
         .if eax > ebx
-            mov eax, obj1Pos.x
-            sub eax, obj1Size.x
-            mov ebx, obj2Pos.x
-            add ebx, obj2Size.x
-            ;then compare the left side
+            mov eax, bar.barObj.pos.x
+            sub eax, bar.sizePoint.x
+            mov ebx, ball.ballObj.pos.x
+            add ebx, ball.sizePoint.x
             .if eax < ebx
                 mov cl, TRUE
             .else
@@ -558,17 +596,14 @@ start:
         .else
             mov cl, FALSE
         .endif
-        mov eax, obj1Pos.y
-        add eax, obj1Size.y
-        ;eax:玩家的下邊界
-        mov ebx, obj2Pos.y
-        ;sub ebx, obj2Size.y
-        ;ebx:球的上邊界
+        mov eax, bar.barObj.pos.y
+        add eax, bar.sizePoint.y
+        mov ebx, ball.ballObj.pos.y
         .if eax > ebx
-            mov eax, obj1Pos.y
-            sub eax, obj1Size.y
-            mov ebx, obj2Pos.y
-            add ebx, obj2Size.y
+            mov eax, bar.barObj.pos.y
+            sub eax, bar.sizePoint.y
+            mov ebx, ball.ballObj.pos.y
+            add ebx, ball.sizePoint.y
             .if eax < ebx
                 mov ch, TRUE
             .else
@@ -577,45 +612,43 @@ start:
         .else
             mov ch, FALSE
         .endif
-        pop ebx
-        pop eax
-        ret
-    collide endp
 
-    ; !purpose: deal with collision
-    ; @params:
-    ; return value:
-    ballColliding proc
-        invoke collide, bar.barObj.pos, ball.ballObj.pos, bar.sizePoint, ball.sizePoint
         .if ch == TRUE  && cl == TRUE
             mov eax, bar.barObj.speed.x
-            .if eax == 0                                    ; 如果玩家是靜止的
-                mov eax, ball.ballObj.speed.x
-                .if ultimate_player1 == 1
+            .if eax > 25
+                .if eax == 0                                    ; 如果玩家是靜止的
+                    mov eax, ball.ballObj.speed.x
                     add eax, 25
-                    mov ultimate_player1, 0
-                .endif
-            .else                                           ; 如果玩家在移動
-                add eax, bar.barObj.speed.x          
-                .if ultimate_player1 == 1
+                .else                                           ; 如果玩家在移動
+                    add eax, bar.barObj.speed.x          
                     add eax, PLAYER_SPEED
-                    mov ultimate_player1, 0
                 .endif
             .endif
             mov ball.ballObj.speed.y, PLAYER_NEG_SPEED
             mov ball.ballObj.speed.x, eax       
         .endif
+        
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
         ret
     ballColliding endp
 
+    ; !purpose: deal with collision between ball and brick
+
     brickCollide proc
+        push eax
+        push ebx
+        push ecx
+        push edi
+        push esi
+
         mov eax, ball.ballObj.pos.x
-        add eax, BALL_HALF_SIZE
+        add eax, BALL_SIZE
         mov ebx, brick.brickObj.pos.x
         .if eax > ebx
-            mov eax, ball.ballObj.pos.x
             sub eax, ball.sizePoint.x
-            mov ebx, brick.brickObj.pos.x
             add ebx, 800
             .if eax < ebx
                 mov cl, TRUE
@@ -630,10 +663,10 @@ start:
         mov ebx, brick.brickObj.pos.y
         ;sub ebx, brick.sizePoint.y
         .if eax > ebx
-            mov eax, ball.ballObj.pos.y
+            ;mov eax, ball.ballObj.pos.y
             sub eax, ball.sizePoint.y
-            mov ebx, brick.brickObj.pos.y
-            add ebx, BRICK_HEIGHT
+            ;mov ebx, brick.brickObj.pos.y
+            add ebx, TOTAL_BRICK_HEIGHT
             .if eax < ebx
                 mov ch, TRUE
             .else
@@ -644,27 +677,48 @@ start:
         .endif
         
         .if ch == TRUE  && cl == TRUE
+            ;index
+            ;initialize edx for division
             mov edx, 0
-            mov eax, ball.ballObj.pos.x
-            ;add eax, BALL_HALF_SIZE
+            mov eax, ball.ballObj.pos.x     
             sub eax, brick.brickObj.pos.x
             mov ecx, 100
             div ecx
             mov ecx, eax
-            
-            ;mov ecx, 0
+
             ;when we get the index of the hitten brick, we can use it to change the brick's state
-            .if brick_manager[ecx*4] == 1
-                ;mov brick_manager[ecx*4], 1
-                mov brick_manager[ecx*4], 0
-                mov eax, ball.ballObj.speed.y
-                neg eax
-                mov ball.ballObj.speed.y, eax
-                dec brick_left
-            .endif
-            ;deal with the speed of ball
+            mov eax, ball.ballObj.pos.y
+            mov ebx, eax
+            add ebx, BALL_SIZE
             
-        .endif
+            ;eax is the top point of ball
+            ;ebx is the bottom point of ball
+            .if eax >= 70 && eax <=90 || ebx >=50 && ebx <= 70
+                jmp judge
+            .elseif eax >= 120 && eax <=140 || ebx >=100 && ebx <= 120
+                add ecx, 8
+                jmp judge
+            .elseif eax >= 170 && eax <=190 || ebx >=150 && ebx <= 170
+                add ecx, 16
+                jmp judge   
+            .endif
+            jmp endproc
+            judge:
+                .if ecx < 24 && brick_manager[ecx*4] == 1 
+                    mov brick_manager[ecx*4], 0
+                    mov eax, ball.ballObj.speed.y
+                    neg eax
+                    mov ball.ballObj.speed.y, eax
+                    dec brick_left
+                .endif
+            .endif
+        endproc:
+        pop esi
+        pop edi
+        pop ecx
+        pop ebx
+        pop eax
+
         ret
     brickCollide endp
 
