@@ -6,7 +6,6 @@ include main.inc
 
 WinMain PROTO :DWORD,:DWORD,:DWORD,:DWORD
 
-; 不確定是什麼
 szText MACRO Name, Text:VARARG
     LOCAL lbl
         jmp lbl
@@ -29,7 +28,6 @@ szText MACRO Name, Text:VARARG
     brick_amount        EQU      24
 
 .data
-    ; NOTSURE
     szDisplayName   db  "Arkanoid",0    ;DD:Define Double Word，要用DWORD也可
     CommandLine     dd  0               ;WinMain函式的參數之一，該參數設null也可
     buffer          db  256 dup(?)
@@ -46,13 +44,12 @@ szText MACRO Name, Text:VARARG
     brick_left          dd    24
     life                BYTE     3
     GAMESTATE           BYTE     1      ;game status
-    ;遊戲狀態
+    ; game status
         ; 1 - menu
         ; 2 - in_game
         ; 3 - player_win
         ; 4 - player_lost
 
-    ; NOTSURE
     ; - MCI_OPEN_PARMS Structure ( API=mciSendCommand ) -
     open_dwCallback         dd ?
     open_wDeviceID          dd ?
@@ -68,8 +65,7 @@ szText MACRO Name, Text:VARARG
     play_dwFrom             dd ?
     play_dwTo               dd ?
 
-; NOTSURE
-; 無初始值之資料段與常數資料段
+; some data segement without initial value
 .data?
 hInstance HINSTANCE ?
 
@@ -80,11 +76,10 @@ thread2ID DWORD ?
 
 .code 
 start:
-    ; NOTSURE
     invoke GetModuleHandle, NULL ; provides the instance handle
     mov    hInstance, eax
 
-    ; 讀取 BMP 圖像
+    ; read BMP image
     invoke LoadBitmap, hInstance, background    ;args:handle,bitmap resource
     mov    hBmp, eax
 
@@ -107,11 +102,11 @@ start:
     mov    loseBmp, eax
 
 
-    ;WinMain 函數是用戶為基於 Microsoft Windows 的應用程序提供的入口點的常規名稱
+    ;WinMain: Microsoft Windows Application Entry Point
     invoke WinMain,hInstance,NULL,CommandLine,SW_SHOWDEFAULT    
     invoke ExitProcess,eax
 
-    ; 判斷 barObj 的 speed 是否為 0, 設定 stopped 為 1
+    ; if barObj.speed equals to 0, set stopped to 1
     isStopped proc addrPlayer:dword
         assume edx:ptr barStruct
         mov edx, addrPlayer
@@ -123,13 +118,13 @@ start:
         ret
     isStopped endp
     
-    ;* the process who draw the background
+    ;* draw the background
     paintBackground proc _hdc:HDC, _hMemDC:HDC, _hMemDC2:HDC
-        LOCAL rect   :RECT      ;RECT 結構定義了矩形左上角和右下角的坐標。
+        LOCAL rect   :RECT      ;RECT structure defining the position of the rectangle
 
         ; paint background image
         .if(GAMESTATE == 1)
-            invoke SelectObject, _hMemDC2, menuBmp  ;SelectObject 函數將一個對象選擇到指定的設備內容 (DC) 中。新對象替換相同類型的先前對象。
+            invoke SelectObject, _hMemDC2, menuBmp  ;SelectObject
         .elseif(GAMESTATE == 2)
             invoke SelectObject, _hMemDC2, hBmp
         .elseif(GAMESTATE == 3)
@@ -137,7 +132,7 @@ start:
         .elseif(GAMESTATE == 4)
             invoke SelectObject, _hMemDC2, loseBmp
         .endif
-        invoke BitBlt, _hMemDC, 0, 0, 910, 522, _hMemDC2, 0, 0, SRCCOPY     ;BitBlt 函數執行將與像素矩形相對應的顏色數據從指定的源設備內容到目標設備內容的bit-block傳輸。
+        invoke BitBlt, _hMemDC, 0, 0, 910, 522, _hMemDC2, 0, 0, SRCCOPY
 
         .if(GAMESTATE == 2)
         ; paint score
@@ -168,7 +163,7 @@ start:
 
     paintBackground endp
 
-    ;* the process who draw the player
+    ;* draw the player
     paintPlayers proc _hdc:HDC, _hMemDC:HDC, _hMemDC2:HDC
         ; Bar
         invoke SelectObject, _hMemDC2, p2_spritesheet
@@ -300,7 +295,6 @@ start:
         ret
     paintPlayers endp
 
-    ; NOTSURE
     screenUpdate proc
         LOCAL hMemDC:HDC
         LOCAL hMemDC2:HDC
@@ -340,7 +334,7 @@ start:
         ret
     paintThread endp   
 
-    ; 使玩家不會走出邊界
+    ; EDGE EVENT
     changePlayerSpeed proc uses eax addrPlayer : DWORD, direction : BYTE, keydown : BYTE
         assume eax: ptr barStruct
         mov eax, addrPlayer
@@ -412,27 +406,18 @@ start:
         mov edx, addrPlayer
         assume ecx:ptr gameObject
         mov ecx, addrPlayer
-        ;.if [edx].jumping == TRUE  ;如果玩家在跳躍(減速)
-        ;    mov ebx, [ecx].speed.y
-        ;    inc ebx
-        ;    mov [ecx].speed.y, ebx
-        ;.endif
-
-        ; X AXIS ______________
+    
+        ; X AXIS
         mov eax, [ecx].pos.x
         mov ebx, [ecx].speed.x
         add eax, ebx
-        ;  如果玩家在屏幕範圍內，我們才改變它的位置
+        ;  only available when the bar is in the screen
         .if  eax < 890 - BAR_WIDTH/2 && eax > 0 + BAR_WIDTH/2
             mov [ecx].pos.x, eax
         .endif
 
-        ; Y AXIS ______________
-        mov eax, [ecx].pos.y
-        mov ebx, [ecx].speed.y
-        add eax, ebx
-        mov eax, 420
-        mov [ecx].pos.y, eax
+        ; Y AXIS
+        mov [ecx].pos.y, 420
 
         ;assume ecx:nothing
         ret
@@ -468,7 +453,6 @@ start:
         mov ecx, [ebx].ballObj.speed.x
         add dx, cx
 
-        ;如果球在屏幕邊緣，我們移動它
         .if edx > 10 && edx < 885
             mov [ebx].ballObj.pos.x, edx
         .else
@@ -587,12 +571,6 @@ start:
     ; !purpose: deal with collision between ball and brick
 
     brickCollide proc
-        push eax
-        push ebx
-        push ecx
-        push edi
-        push esi
-
         mov eax, ball.ballObj.pos.x
         mov ebx, eax
         add eax, BALL_HALF_SIZE
@@ -603,59 +581,44 @@ start:
         
         .if ebx >= 50 
             mov cl, TRUE
-            .if eax <= 850
-                mov ch, TRUE
-            .else
-                mov ch, FALSE
-            .endif
-        .else
-            mov cl, FALSE
-            mov ch, FALSE
-        .endif
-        
-        .if ch == TRUE  && cl == TRUE
-            ;index
-            ;initialize edx for division
-            mov edx, 0
-            mov eax, ball.ballObj.pos.x
-            sub eax, 95
-            mov ecx, 100
-            div ecx
-            mov ecx, eax
+            .if eax <= 895
+                ;index
+                ;initialize edx for division
+                mov edx, 0
+                mov eax, ball.ballObj.pos.x
+                sub eax, 95
+                mov ecx, 100
+                div ecx
+                mov ecx, eax
 
-            ;when we get the index of the hitten brick, we can use it to change the brick's state
-            mov eax, ball.ballObj.pos.y
-            mov ebx, eax
-            add ebx, BALL_SIZE
+                ;when we get the index of the hitten brick, we can use it to change the brick's state
+                mov eax, ball.ballObj.pos.y
+                mov ebx, eax
+                add ebx, BALL_SIZE
             
-            ;eax is the top point of ball
-            ;ebx is the bottom point of ball
-            .if eax >= 70 && eax <=90 || ebx >=50 && ebx <= 70
-                jmp judge
-            .elseif eax >= 120 && eax <=140 || ebx >=100 && ebx <= 120
-                add ecx, 8
-                jmp judge
-            .elseif eax >= 170 && eax <=190 || ebx >=150 && ebx <= 170
-                add ecx, 16
-                jmp judge   
-            .endif
-            jmp endproc
-            judge:
-                .if ecx < 24 && brick_manager[ecx*4] == 1 
-                    mov brick_manager[ecx*4], 0
-                    mov eax, ball.ballObj.speed.y
-                    neg eax
-                    mov ball.ballObj.speed.y, eax
-                    dec brick_left
+                ;eax is the top point of ball
+                ;ebx is the bottom point of ball
+                .if eax >= 70 && eax <=90 || ebx >=50 && ebx <= 70
+                    jmp judge
+                .elseif eax >= 120 && eax <=140 || ebx >=100 && ebx <= 120
+                    add ecx, 8
+                    jmp judge
+                .elseif eax >= 170 && eax <=190 || ebx >=150 && ebx <= 170
+                    add ecx, 16
+                    jmp judge   
                 .endif
+                    jmp endproc
+                judge:
+                    .if ecx < 24 && brick_manager[ecx*4] == 1 
+                        mov brick_manager[ecx*4], 0
+                        mov eax, ball.ballObj.speed.y
+                        neg eax
+                        mov ball.ballObj.speed.y, eax
+                        dec brick_left
+                    .endif
             .endif
+        .endif
         endproc:
-        pop esi
-        pop edi
-        pop ecx
-        pop ebx
-        pop eax
-
         ret
     brickCollide endp
 
