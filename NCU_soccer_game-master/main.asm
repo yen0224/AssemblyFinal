@@ -520,57 +520,6 @@ start:
         ret
     countBricks endp
 
-    ; !purpose: check if two objects collided
-    ;* @param: object1's position and size, object2's position and size
-    ;* return value: TRUE if collided, otherwise FALSE
-    ; collide proc obj1Pos:point, obj2Pos:point, obj1Size:point, obj2Size:point
-    ;     ;* add object's position axises with its sizes 
-    ;     ;* object1
-    ;     mov eax, obj1Pos.x
-    ;     add eax, obj1Size.x
-    ;     ;* object2
-    ;     mov ebx, obj2Pos.x
-    ;     ;sub ebx, obj2Size.x
-    ;     ;* there shall have three threds to deal with the collision
-    ;     ;* compare the right side 
-    ;     .if eax > ebx
-    ;         mov eax, obj1Pos.x
-    ;         sub eax, obj1Size.x
-    ;         mov ebx, obj2Pos.x
-    ;         add ebx, obj2Size.x
-    ;         ;then compare the left side
-    ;         .if eax < ebx
-    ;             mov cl, TRUE
-    ;         .else
-    ;             mov cl, FALSE
-    ;         .endif
-    ;     .else
-    ;         mov cl, FALSE
-    ;     .endif
-    ;     mov eax, obj1Pos.y
-    ;     add eax, obj1Size.y
-    ;     ;eax:玩家的下邊界
-    ;     mov ebx, obj2Pos.y
-    ;     ;sub ebx, obj2Size.y
-    ;     ;ebx:球的上邊界
-    ;     .if eax > ebx
-    ;         mov eax, obj1Pos.y
-    ;         sub eax, obj1Size.y
-    ;         mov ebx, obj2Pos.y
-    ;         add ebx, obj2Size.y
-    ;         .if eax < ebx
-    ;             mov ch, TRUE
-    ;         .else
-    ;             mov ch, FALSE
-    ;         .endif
-    ;     .else
-    ;         mov ch, FALSE
-    ;     .endif
-    ;     pop ebx
-    ;     pop eax
-    ;     ret
-    ; collide endp
-
     ; !purpose: deal with collision between ball and bar
     ballColliding proc
         ; preserve registers
@@ -645,36 +594,22 @@ start:
         push esi
 
         mov eax, ball.ballObj.pos.x
-        ;add eax, BALL_HALF_SIZE
-        mov ebx, brick.brickObj.pos.x
-
-        .if eax > ebx
-            ;sub eax, ball.sizePoint.x
-            add eax, BALL_SIZE
-            add ebx, 800
-            .if eax < ebx
-                mov cl, TRUE
-            .else
-                mov cl, FALSE
-            .endif
-        .else
-            mov cl, FALSE
-        .endif
-        mov eax, ball.ballObj.pos.y
-        ;add eax, BALL_HALF_SIZE
-        mov ebx, brick.brickObj.pos.y
-        ;sub ebx, brick.sizePoint.y
-        .if eax > ebx
-            ;mov eax, ball.ballObj.pos.y
-            add eax, BALL_HALF_SIZE
-            ;mov ebx, brick.brickObj.pos.y
-            add ebx, TOTAL_BRICK_HEIGHT
-            .if eax < ebx
+        mov ebx, eax
+        add eax, BALL_HALF_SIZE
+        sub ebx, BALL_HALF_SIZE
+        
+        ; eax is the right side of the ball 
+        ; ebx is the left side of the ball
+        
+        .if ebx >= 50 
+            mov cl, TRUE
+            .if eax <= 850
                 mov ch, TRUE
             .else
                 mov ch, FALSE
             .endif
         .else
+            mov cl, FALSE
             mov ch, FALSE
         .endif
         
