@@ -558,13 +558,8 @@ start:
         .if ch == TRUE  && cl == TRUE
             mov eax, bar.barObj.speed.x
             .if eax > 25
-                .if eax == 0                                    ; 如果玩家是靜止的
-                    mov eax, ball.ballObj.speed.x
-                    add eax, 25
-                .else                                           ; 如果玩家在移動
                     add eax, bar.barObj.speed.x          
                     add eax, PLAYER_SPEED
-                .endif
             .endif
             mov ball.ballObj.speed.y, PLAYER_NEG_SPEED
             mov ball.ballObj.speed.x, eax       
