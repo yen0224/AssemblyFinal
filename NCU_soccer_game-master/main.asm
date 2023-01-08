@@ -335,7 +335,6 @@ start:
         ret
     screenUpdate endp
 
-    ; NOTSURE
     paintThread proc p:DWORD
         .WHILE GAMESTATE != 5
             invoke Sleep, 8 ; 60 FPS
@@ -632,8 +631,6 @@ start:
         ret
     brickCollide endp
 
-
-    ; NOTSURE
     gameManager proc p:dword
         LOCAL area:RECT
 
@@ -650,7 +647,7 @@ start:
                 ; if no bricks left, win
                 .if (brick_left == 0)
                     mov GAMESTATE, 3
-                .ELSEIF (life == 0)
+                .elseif (life == 0)
                     mov GAMESTATE, 4
                 .endif
             .endw
