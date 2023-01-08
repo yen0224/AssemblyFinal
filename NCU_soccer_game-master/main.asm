@@ -39,7 +39,6 @@ szText MACRO Name, Text:VARARG
     ballBmp         dd  0
     brickBmp        dd  0
     paintstruct     PAINTSTRUCT <>      ;內有ballObj、sizePoint
-    ultimate_player1    BYTE    0
     brick_manager       dd      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
     brick_left          dd    24
     life                BYTE     3
