@@ -16,11 +16,11 @@ szText MACRO Name, Text:VARARG
 .const
     background equ 100
     menu equ 101
-    ball_image equ 102
-    victor_2 equ 103
+    ball_image equ 105
+    victory equ 102
     brick_image equ 104
-    lose equ 105
-    p2 equ 1002
+    lose equ 103
+    barImage equ 106
     CREF_TRANSPARENT  EQU 0FF00FFh
     CREF_TRANSPARENT2 EQU 0FF0000h
     PLAYER_SPEED  EQU  10
@@ -35,7 +35,7 @@ szText MACRO Name, Text:VARARG
     menuBmp         dd  0
     victoryBmp     dd  0
     loseBmp         dd  0
-    p2_spritesheet  dd  0               ;spritesheet載入圖片，灰色方框，資料壓縮
+    barImage_spritesheet  dd  0               ;spritesheet載入圖片，灰色方框，資料壓縮
     ballBmp         dd  0
     brickBmp        dd  0
     paintstruct     PAINTSTRUCT <>      ;內有ballObj、sizePoint
@@ -86,11 +86,11 @@ start:
     invoke LoadBitmap, hInstance, menu
     mov    menuBmp, eax
 
-    invoke LoadBitmap, hInstance, victor_2
+    invoke LoadBitmap, hInstance, victory
     mov    victoryBmp, eax
 
-    invoke LoadBitmap, hInstance, p2
-    mov     p2_spritesheet, eax
+    invoke LoadBitmap, hInstance, barImage
+    mov     barImage_spritesheet, eax
 
     invoke LoadBitmap, hInstance, ball_image
     mov     ballBmp, eax
@@ -166,7 +166,7 @@ start:
     ;* draw the player
     paintPlayers proc _hdc:HDC, _hMemDC:HDC, _hMemDC2:HDC
         ; Bar
-        invoke SelectObject, _hMemDC2, p2_spritesheet
+        invoke SelectObject, _hMemDC2, barImage_spritesheet
 
         movsx eax, bar.direction
         mov ebx, BAR_HALF_WIDTH
