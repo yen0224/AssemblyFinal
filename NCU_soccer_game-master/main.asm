@@ -135,8 +135,8 @@ start:
         invoke BitBlt, _hMemDC, 0, 0, 910, 522, _hMemDC2, 0, 0, SRCCOPY
 
         .if(GAMESTATE == 2)
-        ; paint score
-            invoke SetTextColor,_hMemDC,00FF8800h
+            ; paint score
+            invoke SetTextColor,_hMemDC,00545454h
         
             invoke wsprintf, addr buffer, chr$("life remain = %d"), life
             mov   rect.left, 360
@@ -147,12 +147,23 @@ start:
             invoke DrawText, _hMemDC, addr buffer, -1, \
                 addr rect, DT_CENTER or DT_VCENTER or DT_SINGLELINE
 
-        ; paint bricks remain
-            invoke SetTextColor,_hMemDC,00FF8800h
+            ; paint bricks remain
+            invoke SetTextColor,_hMemDC,00545454h
             invoke wsprintf, addr buffer, chr$("bricks remain = %d"), brick_left
             mov   rect.left, 360
             mov   rect.top , 935
             mov   rect.right, 490
+            mov   rect.bottom, 50  
+
+            invoke DrawText, _hMemDC, addr buffer, -1, \
+                addr rect, DT_CENTER or DT_VCENTER or DT_SINGLELINE
+
+            ; paint tip text
+            invoke SetTextColor,_hMemDC,00545454h
+            invoke wsprintf, addr buffer, chr$("press space to start, left and right arrow key to move")
+            mov   rect.left, 485
+            mov   rect.top , 918
+            mov   rect.right, 900
             mov   rect.bottom, 50  
 
             invoke DrawText, _hMemDC, addr buffer, -1, \
