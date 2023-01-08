@@ -645,10 +645,12 @@ start:
         push esi
 
         mov eax, ball.ballObj.pos.x
-        add eax, BALL_SIZE
+        ;add eax, BALL_HALF_SIZE
         mov ebx, brick.brickObj.pos.x
+
         .if eax > ebx
-            sub eax, ball.sizePoint.x
+            ;sub eax, ball.sizePoint.x
+            add eax, BALL_SIZE
             add ebx, 800
             .if eax < ebx
                 mov cl, TRUE
@@ -659,12 +661,12 @@ start:
             mov cl, FALSE
         .endif
         mov eax, ball.ballObj.pos.y
-        add eax, ball.sizePoint.y
+        ;add eax, BALL_HALF_SIZE
         mov ebx, brick.brickObj.pos.y
         ;sub ebx, brick.sizePoint.y
         .if eax > ebx
             ;mov eax, ball.ballObj.pos.y
-            sub eax, ball.sizePoint.y
+            add eax, BALL_HALF_SIZE
             ;mov ebx, brick.brickObj.pos.y
             add ebx, TOTAL_BRICK_HEIGHT
             .if eax < ebx
@@ -680,8 +682,8 @@ start:
             ;index
             ;initialize edx for division
             mov edx, 0
-            mov eax, ball.ballObj.pos.x     
-            sub eax, brick.brickObj.pos.x
+            mov eax, ball.ballObj.pos.x
+            sub eax, 95
             mov ecx, 100
             div ecx
             mov ecx, eax
