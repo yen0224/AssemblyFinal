@@ -33,7 +33,7 @@ ballStruct ends
 brickStruct struct
     brickObj    gameObject <>
     sizePoint   point <>
-brickStruct endsw
+brickStruct ends
 
 .const
     BAR_WIDTH      EQU 232
@@ -52,14 +52,10 @@ brickStruct endsw
     TOTAL_BRICK_WIDTH  EQU 800
     ;BALL_SPEED_Y EQU -17
 
-    D_RIGHT       EQU 0 
-    D_TOP         EQU 1  
-    D_LEFT        EQU 2     
+    D_RIGHT       EQU 0
+    D_TOP         EQU 1
+    D_LEFT        EQU 2
     D_DOWN        EQU 3
-    D_DOWN_RIGHT  EQU 4
-    D_DOWN_LEFT   EQU 5
-    D_TOP_LEFT    EQU 6
-    D_TOP_RIGHT   EQU 7
 
 .data
     bar barStruct <<<420, 420>,  <0, 0>>, <232/2, 39>, D_LEFT >
